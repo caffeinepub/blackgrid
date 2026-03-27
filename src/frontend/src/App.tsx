@@ -40,7 +40,7 @@ const LOCKED_TABS: Tab[] = [
   "dashboard",
   "shield",
   "profile",
-  "registry",
+
   "network",
   "guards",
   "watchlist",

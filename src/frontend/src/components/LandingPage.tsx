@@ -275,10 +275,9 @@ function TermsOfServiceContent() {
       <BodyText>
         Access to BLACKGRID premium features requires a one-time access fee of
         $100.00 USD, payable via Stripe (all major credit cards) or Chime
-        ($acgagc7 / $Alise-Grey). Payments are non-refundable once access has
-        been granted. The Intelligence Feed is available at no charge. Admin
-        approval is required after payment submission before full access is
-        granted.
+        ($Alise-Grey). Payments are non-refundable once access has been granted.
+        The Intelligence Feed is available at no charge. Admin approval is
+        required after payment submission before full access is granted.
       </BodyText>
 
       <SectionHeading>4. Permitted Use</SectionHeading>
