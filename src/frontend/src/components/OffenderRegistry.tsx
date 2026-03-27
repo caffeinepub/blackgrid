@@ -345,6 +345,38 @@ export default function OffenderRegistry() {
 
   return (
     <div className="space-y-8">
+      {/* Legal Disclaimer Banner */}
+      <div
+        className="w-full px-4 py-4 border"
+        style={{
+          backgroundColor: "rgba(122,0,0,0.08)",
+          borderColor: "rgba(122,0,0,0.3)",
+        }}
+        data-ocid="registry.panel"
+      >
+        <p
+          className="text-[10px] font-bold tracking-widest uppercase mb-2"
+          style={{ color: "#CC3333", fontVariant: "small-caps" }}
+        >
+          ⚠ LEGAL DISCLAIMER
+        </p>
+        <p
+          className="text-[9px] tracking-wider leading-relaxed"
+          style={{ color: "#888" }}
+        >
+          This registry contains information derived solely from publicly
+          available government records, including California Megan&apos;s Law
+          and the San Francisco Police Department&apos;s public data. All data
+          is provided for personal safety awareness purposes only. BLACKGRID
+          does not guarantee the accuracy, completeness, or timeliness of the
+          information displayed. Use of this information to threaten, harass, or
+          intimidate any individual is a criminal offense under California Penal
+          Code § 290.46(j). BLACKGRID assumes no liability for actions taken
+          based on this information. Information may be outdated — always verify
+          with official law enforcement sources.
+        </p>
+      </div>
+
       {/* Global Search */}
       <div className="space-y-2">
         <Input
