@@ -1,4 +1,4 @@
-import { MapPin, RefreshCw } from "lucide-react";
+import { MapPin, RefreshCw, Zap } from "lucide-react";
 import { motion } from "motion/react";
 import { Variant_low_severe_moderate } from "../backend.d";
 import { useAreaIncidents } from "../hooks/useQueries";
@@ -60,7 +60,13 @@ const STATIC_INCIDENTS = [
   },
 ];
 
-export default function IntelligenceTab() {
+interface IntelligenceTabProps {
+  isFreeUser?: boolean;
+}
+
+export default function IntelligenceTab({
+  isFreeUser = false,
+}: IntelligenceTabProps) {
   const {
     data: incidents,
     isLoading,
@@ -82,6 +88,24 @@ export default function IntelligenceTab() {
 
   return (
     <div className="space-y-6">
+      {/* Upgrade Banner for free users */}
+      {isFreeUser && (
+        <div
+          className="flex items-center gap-3 px-4 py-3 border"
+          style={{
+            borderColor: "rgba(201,169,92,0.5)",
+            background: "rgba(201,169,92,0.07)",
+          }}
+          data-ocid="intelligence.upgrade.panel"
+        >
+          <Zap className="w-4 h-4 text-[#C9A95C] flex-shrink-0" />
+          <p className="text-[9px] tracking-[0.18em] uppercase text-[#C9A95C] leading-relaxed">
+            FREE INTELLIGENCE ACCESS — UPGRADE TO FULL BLACKGRID MEMBERSHIP:{" "}
+            <span className="font-bold">$149 VIA CHIME $Alise-Grey</span>
+          </p>
+        </div>
+      )}
+
       <div className="flex items-start justify-between pb-4 border-b border-[#1A1A1A]">
         <div>
           <div className="text-[10px] tracking-widest uppercase text-[#8A8A8A] mb-1">

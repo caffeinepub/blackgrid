@@ -39,6 +39,15 @@ const DANGER_ZONES = [
   { x: 35, y: 55, w: 18, h: 14, key: "dz-soma" },
 ];
 
+const ROUTE_STEPS = [
+  "Head north on Van Ness Ave",
+  "Turn right on Market St",
+  "Continue on Market St past Civic Center",
+  "Turn left on 7th St (avoid Tenderloin)",
+  "Turn right on Howard St",
+  "Arrive at destination via Folsom St",
+];
+
 function IdentityScan() {
   const [scannedProfile, setScannedProfile] = useState<{
     name: string;
@@ -314,6 +323,90 @@ function RouteDefense() {
             />
             <circle cx="50" cy="95" r="2" fill="#2ECC71" />
             <circle cx="75" cy="18" r="2" fill="#C9A95C" />
+            {/* Street name labels */}
+            <text
+              x="2"
+              y="40"
+              fontSize="3"
+              fill="#C9A95C"
+              fillOpacity="0.7"
+              fontFamily="monospace"
+              transform="rotate(-90, 2, 40)"
+            >
+              MARKET ST
+            </text>
+            <text
+              x="2"
+              y="68"
+              fontSize="3"
+              fill="#C9A95C"
+              fillOpacity="0.7"
+              fontFamily="monospace"
+              transform="rotate(-90, 2, 68)"
+            >
+              MISSION ST
+            </text>
+            <text
+              x="48"
+              y="97"
+              fontSize="3"
+              fill="#C9A95C"
+              fillOpacity="0.7"
+              fontFamily="monospace"
+            >
+              VAN NESS AVE
+            </text>
+            <text
+              x="75"
+              y="97"
+              fontSize="3"
+              fill="#C9A95C"
+              fillOpacity="0.7"
+              fontFamily="monospace"
+            >
+              7TH ST
+            </text>
+            <text
+              x="55"
+              y="38"
+              fontSize="2.5"
+              fill="#C9A95C"
+              fillOpacity="0.7"
+              fontFamily="monospace"
+            >
+              HOWARD ST
+            </text>
+            <text
+              x="55"
+              y="52"
+              fontSize="2.5"
+              fill="#C9A95C"
+              fillOpacity="0.7"
+              fontFamily="monospace"
+            >
+              FOLSOM ST
+            </text>
+            {/* Origin / Destination labels */}
+            <text
+              x="43"
+              y="93"
+              fontSize="2.5"
+              fill="#2ECC71"
+              fillOpacity="0.9"
+              fontFamily="monospace"
+            >
+              ORIGIN
+            </text>
+            <text
+              x="68"
+              y="16"
+              fontSize="2.5"
+              fill="#C9A95C"
+              fillOpacity="0.9"
+              fontFamily="monospace"
+            >
+              DESTINATION
+            </text>
           </svg>
         </div>
 
@@ -356,6 +449,31 @@ function RouteDefense() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Step-by-step route card */}
+      <div
+        className="card-blackgrid space-y-3"
+        style={{ borderColor: "rgba(201,169,92,0.2)" }}
+      >
+        <div className="text-[10px] tracking-widest uppercase text-[#C9A95C] border-b border-[#1A1A1A] pb-2">
+          SAFE ROUTE — STEP BY STEP
+        </div>
+        <div className="space-y-2.5">
+          {ROUTE_STEPS.map((step, i) => (
+            <div key={step} className="flex items-start gap-3">
+              <span
+                className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold"
+                style={{ color: "#0A0A0A", background: "#C9A95C" }}
+              >
+                {i + 1}
+              </span>
+              <span className="text-xs text-[#EDEDED] tracking-wide leading-relaxed">
+                {step}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

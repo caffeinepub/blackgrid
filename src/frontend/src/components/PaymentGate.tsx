@@ -1,8 +1,9 @@
-import { Loader2, LogOut, Shield } from "lucide-react";
+import { CreditCard, Loader2, LogOut, Shield } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useActor } from "../hooks/useActor";
+import { useCreateCheckoutSession } from "../hooks/useCreateCheckoutSession";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
 export default function PaymentGate() {
@@ -10,6 +11,8 @@ export default function PaymentGate() {
   const { identity, clear } = useInternetIdentity();
   const [requested, setRequested] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { mutateAsync: createCheckoutSession, isPending: cardPending } =
+    useCreateCheckoutSession();
 
   const principalId = identity?.getPrincipal().toText() ?? "";
 
@@ -24,6 +27,24 @@ export default function PaymentGate() {
       toast.error("Failed to submit request. Try again.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCardPayment = async () => {
+    try {
+      const session = await createCheckoutSession([
+        {
+          productName: "BLACKGRID Elite Membership",
+          productDescription:
+            "Full access to all BLACKGRID features — Dashboard, Shield, Registry, Watchlist, Intelligence, Profile, Network",
+          currency: "usd",
+          priceInCents: BigInt(14900),
+          quantity: BigInt(1),
+        },
+      ]);
+      window.location.href = session.url;
+    } catch {
+      toast.error("Card payment unavailable. Try Chime or contact admin.");
     }
   };
 
@@ -95,16 +116,16 @@ export default function PaymentGate() {
               REQUEST ACCESS.
             </p>
 
-            {/* Payment Steps */}
+            {/* Payment Steps — Chime */}
             <div className="space-y-4 mb-8">
               <p className="text-[9px] tracking-[0.3em] uppercase text-[#C9A95C] mb-3">
-                PAYMENT INSTRUCTIONS
+                PAYMENT INSTRUCTIONS — CHIME
               </p>
 
               {[
                 {
                   step: "01",
-                  text: "Send $99/month via Chime",
+                  text: "Send $149/month via Chime",
                   detail: "Chime: $Alise-Grey  ·  acgagc7@gmail.com",
                 },
                 {
@@ -153,7 +174,7 @@ export default function PaymentGate() {
               </span>
             </div>
 
-            {/* Request button */}
+            {/* Request button (Chime) */}
             <button
               type="button"
               data-ocid="payment_gate.request.primary_button"
@@ -170,6 +191,42 @@ export default function PaymentGate() {
                 "REQUEST ACCESS"
               )}
             </button>
+
+            {/* OR divider */}
+            <div className="flex items-center gap-3 my-5">
+              <div className="h-px flex-1 bg-[#2A2A2A]" />
+              <span className="text-[9px] tracking-[0.3em] uppercase text-[#4A4A4A]">
+                OR
+              </span>
+              <div className="h-px flex-1 bg-[#2A2A2A]" />
+            </div>
+
+            {/* Card payment section */}
+            <div className="border border-[#C9A95C]/15 bg-[#0D0D0D] p-4 mb-4">
+              <p className="text-[9px] tracking-[0.3em] uppercase text-[#C9A95C] mb-3 flex items-center gap-2">
+                <CreditCard className="w-3 h-3" />
+                PAY BY CREDIT CARD
+              </p>
+              <button
+                type="button"
+                data-ocid="payment_gate.card.primary_button"
+                onClick={handleCardPayment}
+                disabled={cardPending}
+                className="w-full py-3.5 bg-[#C9A95C] text-[#0A0A0A] text-[10px] tracking-[0.3em] uppercase font-bold hover:bg-[#E8C878] transition-all disabled:opacity-50 flex items-center justify-center gap-2 mb-2"
+              >
+                {cardPending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    PREPARING CHECKOUT...
+                  </>
+                ) : (
+                  "PAY $149 BY CARD"
+                )}
+              </button>
+              <p className="text-[8px] text-center text-[#4A4A4A] tracking-wide">
+                Visa · Mastercard · Amex · Discover · All Major Cards
+              </p>
+            </div>
 
             <button
               type="button"
@@ -214,8 +271,7 @@ export default function PaymentGate() {
             </div>
 
             <p className="text-[9px] tracking-wide text-[#6A6A6A] uppercase leading-relaxed mt-4">
-              Admin will verify your Chime payment and grant access within 24
-              hours.
+              Admin will verify your payment and grant access within 24 hours.
             </p>
 
             <div className="flex items-center justify-center gap-2 mt-6">

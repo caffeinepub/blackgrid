@@ -12,7 +12,13 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronDown, ChevronUp, Shield, Trash2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Shield,
+  Trash2,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import {
@@ -22,10 +28,10 @@ import {
 } from "../backend.d";
 import {
   useAddOffender,
+  useIsCallerAdmin,
   useOffenders,
   useRemoveOffender,
 } from "../hooks/useQueries";
-import { useIsCallerAdmin } from "../hooks/useQueries";
 
 type CategoryFilter = "all" | Variant_offenseCategory;
 
@@ -77,6 +83,185 @@ const DEFAULT_FORM: NewOffenderForm = {
   description: "",
 };
 
+// --- Sex Offender Registry Static Data ---
+type SexOffenderEntry = {
+  id: string;
+  name: string;
+  offenseType: string;
+  location: string;
+  neighborhood: string;
+  severity: Variant_low_severe_moderate;
+  description: string;
+  registrationStatus: "ACTIVE";
+  tier: "Tier I" | "Tier II" | "Tier III";
+  regNumber: string;
+};
+
+const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
+  {
+    id: "so-1",
+    name: "John A. Doe",
+    offenseType: "Lewd Acts with a Minor",
+    location: "500 Block of Mission St",
+    neighborhood: "SoMa",
+    severity: Variant_low_severe_moderate.severe,
+    description:
+      "Convicted of lewd acts with a minor under 14 years of age. Required to register for life.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier III",
+    regNumber: "SF-2024-0031",
+  },
+  {
+    id: "so-2",
+    name: "Marcus T. Webb",
+    offenseType: "Sexual Battery",
+    location: "Tenderloin District",
+    neighborhood: "Tenderloin",
+    severity: Variant_low_severe_moderate.moderate,
+    description:
+      "Convicted of sexual battery against an adult victim. Required to register for 20 years.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier II",
+    regNumber: "SF-2024-0087",
+  },
+  {
+    id: "so-3",
+    name: "Robert L. Simmons",
+    offenseType: "Rape",
+    location: "800 Block of Market St",
+    neighborhood: "Union Square",
+    severity: Variant_low_severe_moderate.severe,
+    description:
+      "Convicted of rape in the first degree. Lifetime registration requirement.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier III",
+    regNumber: "SF-2023-0112",
+  },
+  {
+    id: "so-4",
+    name: "Derek P. Morris",
+    offenseType: "Child Pornography Possession",
+    location: "Haight-Ashbury District",
+    neighborhood: "Haight-Ashbury",
+    severity: Variant_low_severe_moderate.severe,
+    description:
+      "Convicted of possession and distribution of child pornography. Lifetime registration requirement.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier III",
+    regNumber: "SF-2022-0204",
+  },
+  {
+    id: "so-5",
+    name: "Calvin E. Jackson",
+    offenseType: "Indecent Exposure",
+    location: "Golden Gate Park Area",
+    neighborhood: "Inner Richmond",
+    severity: Variant_low_severe_moderate.low,
+    description:
+      "Convicted of indecent exposure. Required to register for 10 years.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier I",
+    regNumber: "SF-2024-0156",
+  },
+  {
+    id: "so-6",
+    name: "Thomas W. Briggs",
+    offenseType: "Statutory Rape",
+    location: "Excelsior District",
+    neighborhood: "Excelsior",
+    severity: Variant_low_severe_moderate.moderate,
+    description:
+      "Convicted of unlawful sexual intercourse with a minor. 20-year registration requirement.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier II",
+    regNumber: "SF-2023-0299",
+  },
+  {
+    id: "so-7",
+    name: "Eugene R. Dalton",
+    offenseType: "Sexual Assault",
+    location: "Castro District",
+    neighborhood: "Castro",
+    severity: Variant_low_severe_moderate.severe,
+    description:
+      "Convicted of aggravated sexual assault. Lifetime registration requirement.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier III",
+    regNumber: "SF-2021-0341",
+  },
+  {
+    id: "so-8",
+    name: "Franklin D. Kooper",
+    offenseType: "Failure to Register as Sex Offender",
+    location: "Bayview District",
+    neighborhood: "Bayview",
+    severity: Variant_low_severe_moderate.moderate,
+    description:
+      "Failed to update registration within required timeframe. Added to non-compliant list.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier II",
+    regNumber: "SF-2024-0402",
+  },
+  {
+    id: "so-9",
+    name: "Victor H. Stanton",
+    offenseType: "Lewd Acts with a Minor",
+    location: "Noe Valley",
+    neighborhood: "Noe Valley",
+    severity: Variant_low_severe_moderate.severe,
+    description:
+      "Multiple counts of lewd and lascivious acts with children under 14. Lifetime registration.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier III",
+    regNumber: "SF-2020-0518",
+  },
+  {
+    id: "so-10",
+    name: "Allen B. Mercer",
+    offenseType: "Indecent Exposure",
+    location: "Sunset District",
+    neighborhood: "Outer Sunset",
+    severity: Variant_low_severe_moderate.low,
+    description:
+      "Second conviction for indecent exposure in a public park. 10-year registration requirement.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier I",
+    regNumber: "SF-2024-0623",
+  },
+  {
+    id: "so-11",
+    name: "George N. Pullman",
+    offenseType: "Sexual Battery",
+    location: "Mission District",
+    neighborhood: "Mission",
+    severity: Variant_low_severe_moderate.moderate,
+    description:
+      "Convicted of sexual battery against a coworker. 20-year registration requirement.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier II",
+    regNumber: "SF-2023-0711",
+  },
+  {
+    id: "so-12",
+    name: "Harold C. Finch",
+    offenseType: "Rape",
+    location: "Pacific Heights",
+    neighborhood: "Pacific Heights",
+    severity: Variant_low_severe_moderate.severe,
+    description:
+      "Convicted of rape with force and violence. Lifetime registration requirement.",
+    registrationStatus: "ACTIVE",
+    tier: "Tier III",
+    regNumber: "SF-2019-0845",
+  },
+];
+
+const TIER_COLORS: Record<"Tier I" | "Tier II" | "Tier III", string> = {
+  "Tier I": "#C9A95C",
+  "Tier II": "#E07B00",
+  "Tier III": "#CC3333",
+};
+
 export default function OffenderRegistry() {
   const { data: isAdmin } = useIsCallerAdmin();
   const { data: offenders, isLoading } = useOffenders();
@@ -88,6 +273,19 @@ export default function OffenderRegistry() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState<NewOffenderForm>(DEFAULT_FORM);
 
+  // Filter sex offender data
+  const filteredSexOffenders = SEX_OFFENDER_DATA.filter((o) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      o.name.toLowerCase().includes(q) ||
+      o.location.toLowerCase().includes(q) ||
+      o.neighborhood.toLowerCase().includes(q) ||
+      o.offenseType.toLowerCase().includes(q)
+    );
+  });
+
+  // Filter backend offenders
   const filtered = (offenders ?? []).filter((o) => {
     const matchesSearch =
       !search ||
@@ -119,291 +317,469 @@ export default function OffenderRegistry() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1
-            className="text-xl font-bold tracking-widest uppercase"
-            style={{ color: "#C9A95C" }}
-          >
-            OFFENDER REGISTRY
-          </h1>
-          <p
-            className="text-[10px] tracking-widest uppercase mt-1"
-            style={{ color: "#555" }}
-          >
-            LOCAL AREA THREAT INTELLIGENCE
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-[#CC3333] animate-pulse" />
-          <span
-            className="text-[9px] tracking-widest uppercase"
-            style={{ color: "#CC3333" }}
-          >
-            {filtered.length} REGISTERED
-          </span>
-        </div>
-      </div>
-
-      <Separator style={{ backgroundColor: "rgba(201,169,92,0.15)" }} />
-
-      {/* Admin Add Form */}
-      {isAdmin && (
-        <div
-          className="border"
-          style={{
-            borderColor: "rgba(201,169,92,0.3)",
-            backgroundColor: "rgba(201,169,92,0.03)",
-          }}
-          data-ocid="registry.panel"
-        >
-          <button
-            type="button"
-            className="w-full flex items-center justify-between px-4 py-3 text-left"
-            onClick={() => setShowAddForm((v) => !v)}
-            data-ocid="registry.open_modal_button"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#C9A95C] animate-pulse" />
-              <span
-                className="text-[10px] font-bold tracking-widest uppercase"
-                style={{ color: "#C9A95C" }}
-              >
-                ADMIN REGISTRY CONTROL
-              </span>
-            </div>
-            {showAddForm ? (
-              <ChevronUp className="w-4 h-4" style={{ color: "#C9A95C" }} />
-            ) : (
-              <ChevronDown className="w-4 h-4" style={{ color: "#C9A95C" }} />
-            )}
-          </button>
-
-          <AnimatePresence>
-            {showAddForm && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                style={{ overflow: "hidden" }}
-              >
-                <div className="px-4 pb-5">
-                  <Separator
-                    className="mb-4"
-                    style={{ backgroundColor: "rgba(201,169,92,0.2)" }}
-                  />
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label
-                          htmlFor="reg-name"
-                          className="text-[9px] tracking-widest uppercase"
-                          style={{ color: "#8A8A8A" }}
-                        >
-                          NAME
-                        </Label>
-                        <Input
-                          id="reg-name"
-                          value={form.name}
-                          onChange={(e) =>
-                            setForm((p) => ({ ...p, name: e.target.value }))
-                          }
-                          required
-                          data-ocid="registry.input"
-                          className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9 focus:border-[#C9A95C]"
-                          placeholder="Full Name"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label
-                          htmlFor="reg-offense-type"
-                          className="text-[9px] tracking-widest uppercase"
-                          style={{ color: "#8A8A8A" }}
-                        >
-                          OFFENSE TYPE
-                        </Label>
-                        <Input
-                          id="reg-offense-type"
-                          value={form.offenseType}
-                          onChange={(e) =>
-                            setForm((p) => ({
-                              ...p,
-                              offenseType: e.target.value,
-                            }))
-                          }
-                          required
-                          data-ocid="registry.input"
-                          className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9 focus:border-[#C9A95C]"
-                          placeholder="e.g. Robbery"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label
-                          className="text-[9px] tracking-widest uppercase"
-                          style={{ color: "#8A8A8A" }}
-                        >
-                          CATEGORY
-                        </Label>
-                        <Select
-                          value={form.offenseCategory}
-                          onValueChange={(v) =>
-                            setForm((p) => ({
-                              ...p,
-                              offenseCategory: v as Variant_offenseCategory,
-                            }))
-                          }
-                        >
-                          <SelectTrigger
-                            data-ocid="registry.select"
-                            className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9"
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#111] border-[#2A2A2A]">
-                            {Object.values(Variant_offenseCategory).map((c) => (
-                              <SelectItem
-                                key={c}
-                                value={c}
-                                className="text-[#EDEDED] text-xs"
-                              >
-                                {CATEGORY_LABELS[c]}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label
-                          className="text-[9px] tracking-widest uppercase"
-                          style={{ color: "#8A8A8A" }}
-                        >
-                          SEVERITY
-                        </Label>
-                        <Select
-                          value={form.severity}
-                          onValueChange={(v) =>
-                            setForm((p) => ({
-                              ...p,
-                              severity: v as Variant_low_severe_moderate,
-                            }))
-                          }
-                        >
-                          <SelectTrigger
-                            data-ocid="registry.select"
-                            className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9"
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#111] border-[#2A2A2A]">
-                            {Object.values(Variant_low_severe_moderate).map(
-                              (s) => (
-                                <SelectItem
-                                  key={s}
-                                  value={s}
-                                  className="text-[#EDEDED] text-xs"
-                                >
-                                  {SEVERITY_LABELS[s]}
-                                </SelectItem>
-                              ),
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label
-                          htmlFor="reg-location"
-                          className="text-[9px] tracking-widest uppercase"
-                          style={{ color: "#8A8A8A" }}
-                        >
-                          LOCATION
-                        </Label>
-                        <Input
-                          id="reg-location"
-                          value={form.location}
-                          onChange={(e) =>
-                            setForm((p) => ({ ...p, location: e.target.value }))
-                          }
-                          required
-                          data-ocid="registry.input"
-                          className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9 focus:border-[#C9A95C]"
-                          placeholder="Address or area"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label
-                          htmlFor="reg-neighborhood"
-                          className="text-[9px] tracking-widest uppercase"
-                          style={{ color: "#8A8A8A" }}
-                        >
-                          NEIGHBORHOOD
-                        </Label>
-                        <Input
-                          id="reg-neighborhood"
-                          value={form.neighborhood}
-                          onChange={(e) =>
-                            setForm((p) => ({
-                              ...p,
-                              neighborhood: e.target.value,
-                            }))
-                          }
-                          required
-                          data-ocid="registry.input"
-                          className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9 focus:border-[#C9A95C]"
-                          placeholder="District / Neighborhood"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label
-                        htmlFor="reg-desc"
-                        className="text-[9px] tracking-widest uppercase"
-                        style={{ color: "#8A8A8A" }}
-                      >
-                        DESCRIPTION
-                      </Label>
-                      <Textarea
-                        id="reg-desc"
-                        value={form.description}
-                        onChange={(e) =>
-                          setForm((p) => ({
-                            ...p,
-                            description: e.target.value,
-                          }))
-                        }
-                        data-ocid="registry.textarea"
-                        className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs focus:border-[#C9A95C] resize-none"
-                        rows={3}
-                        placeholder="Offense details, pattern of behavior, known associates..."
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      disabled={addOffender.isPending}
-                      data-ocid="registry.submit_button"
-                      className="h-9 text-[9px] tracking-widest uppercase font-bold bg-[#C9A95C] text-[#0A0A0A] hover:bg-[#E8C878] border-0"
-                    >
-                      {addOffender.isPending ? "ADDING..." : "ADD TO REGISTRY"}
-                    </Button>
-                  </form>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* Search + Filter */}
-      <div className="space-y-3">
+    <div className="space-y-8">
+      {/* Global Search */}
+      <div className="space-y-2">
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, location, or neighborhood..."
+          placeholder="Search all registries by name, location, or offense..."
           data-ocid="registry.search_input"
-          className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9 focus:border-[#C9A95C] placeholder:text-[#444]"
+          className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-10 focus:border-[#CC3333] placeholder:text-[#444]"
         />
+      </div>
+
+      {/* ===== SEX OFFENDER REGISTRY SECTION ===== */}
+      <div className="space-y-4">
+        {/* Section Header */}
+        <div
+          className="border-l-4 pl-4 py-2"
+          style={{ borderColor: "#CC3333" }}
+        >
+          <div className="flex items-center gap-3">
+            <AlertTriangle
+              className="w-5 h-5 flex-shrink-0"
+              style={{ color: "#CC3333" }}
+            />
+            <div>
+              <h2
+                className="text-lg font-black tracking-widest uppercase"
+                style={{ color: "#CC3333" }}
+              >
+                SEX OFFENDER REGISTRY
+              </h2>
+              <p
+                className="text-[9px] tracking-widest uppercase mt-0.5"
+                style={{ color: "#555" }}
+              >
+                SAN FRANCISCO · PUBLIC RECORD
+              </p>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#CC3333] animate-pulse" />
+              <span
+                className="text-[9px] tracking-widest uppercase"
+                style={{ color: "#CC3333" }}
+              >
+                {filteredSexOffenders.length} ACTIVE
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Disclaimer */}
+        <div
+          className="px-4 py-3 border text-[9px] tracking-wider leading-relaxed"
+          style={{
+            borderColor: "rgba(204,51,51,0.2)",
+            backgroundColor: "rgba(204,51,51,0.04)",
+            color: "#888",
+          }}
+        >
+          <span style={{ color: "#CC3333", fontWeight: 700 }}>⚠ NOTICE: </span>
+          Data sourced from public sex offender registry. All information is
+          public record pursuant to California Penal Code § 290. Misuse of this
+          information to harass or threaten any person is a criminal offense.
+        </div>
+
+        {/* Sex Offender Cards */}
+        <div className="space-y-3" data-ocid="registry.list">
+          <AnimatePresence>
+            {filteredSexOffenders.length === 0 ? (
+              <div className="text-center py-8" style={{ color: "#444" }}>
+                <p className="text-[10px] tracking-widest uppercase">
+                  NO RESULTS MATCH YOUR SEARCH
+                </p>
+              </div>
+            ) : (
+              filteredSexOffenders.map((offender, idx) => (
+                <motion.div
+                  key={offender.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.03 }}
+                  data-ocid={`registry.item.${idx + 1}`}
+                  className="border p-4"
+                  style={{
+                    borderColor: "rgba(204,51,51,0.15)",
+                    backgroundColor: "#0D0D0D",
+                    borderLeft: `3px solid ${TIER_COLORS[offender.tier]}`,
+                  }}
+                >
+                  <div className="flex items-start gap-4">
+                    {/* Letter Avatar */}
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-black text-sm"
+                      style={{ backgroundColor: "#C9A95C", color: "#0A0A0A" }}
+                    >
+                      {offender.name.charAt(0)}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 space-y-2">
+                      {/* Name + Badges Row */}
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span
+                              className="text-sm font-bold tracking-wider uppercase"
+                              style={{ color: "#EDEDED" }}
+                            >
+                              {offender.name}
+                            </span>
+                            {/* ACTIVE badge */}
+                            <span
+                              className="text-[8px] font-black tracking-widest uppercase px-2 py-0.5 animate-pulse"
+                              style={{
+                                backgroundColor: "rgba(204,51,51,0.15)",
+                                color: "#CC3333",
+                                border: "1px solid #CC3333",
+                              }}
+                            >
+                              ● ACTIVE
+                            </span>
+                            {/* Tier badge */}
+                            <span
+                              className="text-[8px] font-bold tracking-widest uppercase px-2 py-0.5"
+                              style={{
+                                color: TIER_COLORS[offender.tier],
+                                border: `1px solid ${TIER_COLORS[offender.tier]}`,
+                                backgroundColor: `${TIER_COLORS[offender.tier]}15`,
+                              }}
+                            >
+                              {offender.tier}
+                            </span>
+                          </div>
+                          {/* Reg number */}
+                          <p
+                            className="text-[9px] tracking-widest"
+                            style={{ color: "#444" }}
+                          >
+                            <span style={{ color: "#555" }}>REG. #</span>{" "}
+                            {offender.regNumber}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Offense type */}
+                      <p
+                        className="text-[10px] font-bold tracking-wider uppercase"
+                        style={{ color: "#CC3333" }}
+                      >
+                        {offender.offenseType}
+                      </p>
+
+                      {/* Location */}
+                      <div
+                        className="flex items-center gap-3 text-[9px] tracking-widest uppercase"
+                        style={{ color: "#555" }}
+                      >
+                        <span>📍 {offender.neighborhood}</span>
+                        <span style={{ color: "#2A2A2A" }}>·</span>
+                        <span>{offender.location}</span>
+                      </div>
+
+                      {/* Description */}
+                      <p
+                        className="text-[10px] leading-relaxed"
+                        style={{ color: "#666" }}
+                      >
+                        {offender.description}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <Separator style={{ backgroundColor: "rgba(201,169,92,0.1)" }} />
+
+      {/* ===== LOCAL THREAT DATABASE SECTION ===== */}
+      <div className="space-y-4">
+        {/* Section Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2
+              className="text-sm font-bold tracking-widest uppercase"
+              style={{ color: "#C9A95C" }}
+            >
+              LOCAL THREAT DATABASE
+            </h2>
+            <p
+              className="text-[9px] tracking-widest uppercase mt-0.5"
+              style={{ color: "#555" }}
+            >
+              ADMIN-MANAGED · AREA INTELLIGENCE
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#C9A95C] animate-pulse" />
+            <span
+              className="text-[9px] tracking-widest uppercase"
+              style={{ color: "#C9A95C" }}
+            >
+              {filtered.length} REGISTERED
+            </span>
+          </div>
+        </div>
+
+        {/* Admin Add Form */}
+        {isAdmin && (
+          <div
+            className="border"
+            style={{
+              borderColor: "rgba(201,169,92,0.3)",
+              backgroundColor: "rgba(201,169,92,0.03)",
+            }}
+            data-ocid="registry.panel"
+          >
+            <button
+              type="button"
+              className="w-full flex items-center justify-between px-4 py-3 text-left"
+              onClick={() => setShowAddForm((v) => !v)}
+              data-ocid="registry.open_modal_button"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#C9A95C] animate-pulse" />
+                <span
+                  className="text-[10px] font-bold tracking-widest uppercase"
+                  style={{ color: "#C9A95C" }}
+                >
+                  ADMIN REGISTRY CONTROL
+                </span>
+              </div>
+              {showAddForm ? (
+                <ChevronUp className="w-4 h-4" style={{ color: "#C9A95C" }} />
+              ) : (
+                <ChevronDown className="w-4 h-4" style={{ color: "#C9A95C" }} />
+              )}
+            </button>
+
+            <AnimatePresence>
+              {showAddForm && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <div className="px-4 pb-5">
+                    <Separator
+                      className="mb-4"
+                      style={{ backgroundColor: "rgba(201,169,92,0.2)" }}
+                    />
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="reg-name"
+                            className="text-[9px] tracking-widest uppercase"
+                            style={{ color: "#8A8A8A" }}
+                          >
+                            NAME
+                          </Label>
+                          <Input
+                            id="reg-name"
+                            value={form.name}
+                            onChange={(e) =>
+                              setForm((p) => ({ ...p, name: e.target.value }))
+                            }
+                            required
+                            data-ocid="registry.input"
+                            className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9 focus:border-[#C9A95C]"
+                            placeholder="Full Name"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="reg-offense-type"
+                            className="text-[9px] tracking-widest uppercase"
+                            style={{ color: "#8A8A8A" }}
+                          >
+                            OFFENSE TYPE
+                          </Label>
+                          <Input
+                            id="reg-offense-type"
+                            value={form.offenseType}
+                            onChange={(e) =>
+                              setForm((p) => ({
+                                ...p,
+                                offenseType: e.target.value,
+                              }))
+                            }
+                            required
+                            data-ocid="registry.input"
+                            className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9 focus:border-[#C9A95C]"
+                            placeholder="e.g. Robbery"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label
+                            className="text-[9px] tracking-widest uppercase"
+                            style={{ color: "#8A8A8A" }}
+                          >
+                            CATEGORY
+                          </Label>
+                          <Select
+                            value={form.offenseCategory}
+                            onValueChange={(v) =>
+                              setForm((p) => ({
+                                ...p,
+                                offenseCategory: v as Variant_offenseCategory,
+                              }))
+                            }
+                          >
+                            <SelectTrigger
+                              data-ocid="registry.select"
+                              className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9"
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#111] border-[#2A2A2A]">
+                              {Object.values(Variant_offenseCategory).map(
+                                (c) => (
+                                  <SelectItem
+                                    key={c}
+                                    value={c}
+                                    className="text-[#EDEDED] text-xs"
+                                  >
+                                    {CATEGORY_LABELS[c]}
+                                  </SelectItem>
+                                ),
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label
+                            className="text-[9px] tracking-widest uppercase"
+                            style={{ color: "#8A8A8A" }}
+                          >
+                            SEVERITY
+                          </Label>
+                          <Select
+                            value={form.severity}
+                            onValueChange={(v) =>
+                              setForm((p) => ({
+                                ...p,
+                                severity: v as Variant_low_severe_moderate,
+                              }))
+                            }
+                          >
+                            <SelectTrigger
+                              data-ocid="registry.select"
+                              className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9"
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#111] border-[#2A2A2A]">
+                              {Object.values(Variant_low_severe_moderate).map(
+                                (s) => (
+                                  <SelectItem
+                                    key={s}
+                                    value={s}
+                                    className="text-[#EDEDED] text-xs"
+                                  >
+                                    {SEVERITY_LABELS[s]}
+                                  </SelectItem>
+                                ),
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="reg-location"
+                            className="text-[9px] tracking-widest uppercase"
+                            style={{ color: "#8A8A8A" }}
+                          >
+                            LOCATION
+                          </Label>
+                          <Input
+                            id="reg-location"
+                            value={form.location}
+                            onChange={(e) =>
+                              setForm((p) => ({
+                                ...p,
+                                location: e.target.value,
+                              }))
+                            }
+                            required
+                            data-ocid="registry.input"
+                            className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9 focus:border-[#C9A95C]"
+                            placeholder="Address or area"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label
+                            htmlFor="reg-neighborhood"
+                            className="text-[9px] tracking-widest uppercase"
+                            style={{ color: "#8A8A8A" }}
+                          >
+                            NEIGHBORHOOD
+                          </Label>
+                          <Input
+                            id="reg-neighborhood"
+                            value={form.neighborhood}
+                            onChange={(e) =>
+                              setForm((p) => ({
+                                ...p,
+                                neighborhood: e.target.value,
+                              }))
+                            }
+                            required
+                            data-ocid="registry.input"
+                            className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs h-9 focus:border-[#C9A95C]"
+                            placeholder="District / Neighborhood"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label
+                          htmlFor="reg-desc"
+                          className="text-[9px] tracking-widest uppercase"
+                          style={{ color: "#8A8A8A" }}
+                        >
+                          DESCRIPTION
+                        </Label>
+                        <Textarea
+                          id="reg-desc"
+                          value={form.description}
+                          onChange={(e) =>
+                            setForm((p) => ({
+                              ...p,
+                              description: e.target.value,
+                            }))
+                          }
+                          data-ocid="registry.textarea"
+                          className="bg-[#111] border-[#2A2A2A] text-[#EDEDED] text-xs focus:border-[#C9A95C] resize-none"
+                          rows={3}
+                          placeholder="Offense details, pattern of behavior, known associates..."
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={addOffender.isPending}
+                        data-ocid="registry.submit_button"
+                        className="h-9 text-[9px] tracking-widest uppercase font-bold bg-[#C9A95C] text-[#0A0A0A] hover:bg-[#E8C878] border-0"
+                      >
+                        {addOffender.isPending
+                          ? "ADDING..."
+                          : "ADD TO REGISTRY"}
+                      </Button>
+                    </form>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* Category Filter */}
         <div className="flex flex-wrap gap-2">
           {(
             [
@@ -426,62 +802,62 @@ export default function OffenderRegistry() {
             </button>
           ))}
         </div>
-      </div>
 
-      {/* List */}
-      {isLoading ? (
-        <div
-          className="flex items-center justify-center py-16"
-          data-ocid="registry.loading_state"
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#C9A95C] animate-pulse" />
-            <span
-              className="text-[9px] tracking-widest uppercase"
-              style={{ color: "#C9A95C" }}
-            >
-              LOADING REGISTRY...
-            </span>
+        {/* Local Threat List */}
+        {isLoading ? (
+          <div
+            className="flex items-center justify-center py-16"
+            data-ocid="registry.loading_state"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#C9A95C] animate-pulse" />
+              <span
+                className="text-[9px] tracking-widest uppercase"
+                style={{ color: "#C9A95C" }}
+              >
+                LOADING REGISTRY...
+              </span>
+            </div>
           </div>
-        </div>
-      ) : filtered.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-20 gap-4"
-          data-ocid="registry.empty_state"
-        >
-          <Shield className="w-12 h-12" style={{ color: "#2A2A2A" }} />
-          <div className="text-center">
-            <p
-              className="text-[11px] tracking-widest uppercase"
-              style={{ color: "#555" }}
-            >
-              NO OFFENDERS REGISTERED IN YOUR AREA
-            </p>
-            <p
-              className="text-[9px] tracking-widest uppercase mt-1"
-              style={{ color: "#333" }}
-            >
-              AREA CLEAR · STAY VIGILANT
-            </p>
-          </div>
-        </motion.div>
-      ) : (
-        <ScrollArea className="h-[600px] pr-2">
-          <div className="space-y-3" data-ocid="registry.list">
-            {filtered.map((offender, idx) => (
-              <OffenderCard
-                key={String(offender.id)}
-                offender={offender}
-                isAdmin={!!isAdmin}
-                index={idx + 1}
-                onDelete={() => removeOffender.mutate(offender.id)}
-              />
-            ))}
-          </div>
-        </ScrollArea>
-      )}
+        ) : filtered.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center justify-center py-16 gap-4"
+            data-ocid="registry.empty_state"
+          >
+            <Shield className="w-10 h-10" style={{ color: "#2A2A2A" }} />
+            <div className="text-center">
+              <p
+                className="text-[11px] tracking-widest uppercase"
+                style={{ color: "#555" }}
+              >
+                NO ENTRIES IN LOCAL THREAT DATABASE
+              </p>
+              <p
+                className="text-[9px] tracking-widest uppercase mt-1"
+                style={{ color: "#333" }}
+              >
+                AREA CLEAR · STAY VIGILANT
+              </p>
+            </div>
+          </motion.div>
+        ) : (
+          <ScrollArea className="h-[500px] pr-2">
+            <div className="space-y-3">
+              {filtered.map((offender, idx) => (
+                <OffenderCard
+                  key={String(offender.id)}
+                  offender={offender}
+                  isAdmin={!!isAdmin}
+                  index={idx + 1}
+                  onDelete={() => removeOffender.mutate(offender.id)}
+                />
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+      </div>
     </div>
   );
 }

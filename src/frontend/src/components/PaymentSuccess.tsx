@@ -25,6 +25,9 @@ export default function PaymentSuccess() {
     // Record the purchase so admin sees the notification
     extActor.recordSubscriptionPurchase(sessionId, "elite").catch(() => {});
 
+    // Queue user for admin approval (grants full access)
+    actor.requestApproval().catch(() => {});
+
     // Upgrade the user's profile to Elite tier
     actor
       .getCallerUserProfile()
@@ -75,13 +78,14 @@ export default function PaymentSuccess() {
           TRANSACTION VERIFIED
         </p>
         <h1 className="text-3xl font-bold tracking-widest uppercase text-[#EDEDED] mb-4">
-          PAYMENT CONFIRMED
+          FULL ACCESS UNLOCKED
         </h1>
         <p className="text-[#8A8A8A] text-sm mb-2">
-          Your Elite subscription is now active — $99/month.
+          Your Elite membership is now active — $149/month.
         </p>
         <p className="text-[#5A5A5A] text-xs tracking-wide mb-10">
-          Full AI threat detection and advanced intel have been unlocked.
+          All BLACKGRID features are now available: Dashboard, Shield, Registry,
+          Watchlist, Intelligence, Profile, and Network.
         </p>
 
         <button

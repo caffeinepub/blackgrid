@@ -321,12 +321,10 @@ export default function LandingPage({
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <img
-                src="/assets/generated/blackgrid-logo-transparent.dim_200x200.png"
-                alt="BLACKGRID"
-                className="w-8 h-8"
-              />
-              <span className="text-lg font-bold tracking-widest uppercase text-[#C9A95C]">
+              <span
+                className="text-lg font-bold uppercase text-[#C9A95C]"
+                style={{ letterSpacing: "0.25em" }}
+              >
                 BLACKGRID
               </span>
             </div>

@@ -147,6 +147,106 @@ export default function LiveMap() {
             strokeDasharray="2,1"
             strokeOpacity="0.6"
           />
+
+          {/* Street name labels */}
+          <text
+            x="30"
+            y="72"
+            fill="#C9A95C"
+            opacity="0.55"
+            fontSize="2.8"
+            fontFamily="monospace"
+            transform="rotate(-30, 30, 72)"
+          >
+            Market St
+          </text>
+          <text
+            x="28"
+            y="78"
+            fill="#C9A95C"
+            opacity="0.55"
+            fontSize="2.8"
+            fontFamily="monospace"
+            transform="rotate(-30, 28, 78)"
+          >
+            Mission St
+          </text>
+          <text
+            x="52"
+            y="55"
+            fill="#C9A95C"
+            opacity="0.55"
+            fontSize="2.8"
+            fontFamily="monospace"
+            transform="rotate(-90, 52, 55)"
+          >
+            Van Ness Ave
+          </text>
+          <text
+            x="40"
+            y="62"
+            fill="#C9A95C"
+            opacity="0.55"
+            fontSize="2.8"
+            fontFamily="monospace"
+          >
+            Howard St
+          </text>
+          <text
+            x="45"
+            y="67"
+            fill="#C9A95C"
+            opacity="0.55"
+            fontSize="2.8"
+            fontFamily="monospace"
+          >
+            Folsom St
+          </text>
+          <text
+            x="55"
+            y="50"
+            fill="#C9A95C"
+            opacity="0.55"
+            fontSize="2.8"
+            fontFamily="monospace"
+            transform="rotate(-90, 55, 50)"
+          >
+            7th St
+          </text>
+          <text
+            x="65"
+            y="30"
+            fill="#C9A95C"
+            opacity="0.55"
+            fontSize="2.8"
+            fontFamily="monospace"
+          >
+            Geary Blvd
+          </text>
+          <text
+            x="72"
+            y="38"
+            fill="#C9A95C"
+            opacity="0.55"
+            fontSize="2.8"
+            fontFamily="monospace"
+            transform="rotate(-90, 72, 38)"
+          >
+            Divisadero St
+          </text>
+
+          {/* Safe Route legend */}
+          <text
+            x="51"
+            y="90"
+            fill="#C9A95C"
+            opacity="0.8"
+            fontSize="2.5"
+            fontFamily="monospace"
+            fontWeight="bold"
+          >
+            SAFE ROUTE →
+          </text>
         </svg>
       </div>
 
