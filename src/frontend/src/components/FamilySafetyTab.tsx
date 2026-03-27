@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const TIPS = [
   {
@@ -31,6 +31,19 @@ const DOTS = [
   { id: "dot-9", x: 45, y: 92, color: "#8B5CF6", size: 12 },
 ];
 
+const PIN_COLORS = [
+  "linear-gradient(135deg,#F59E0B,#D97706)",
+  "linear-gradient(135deg,#10B981,#059669)",
+  "linear-gradient(135deg,#8B5CF6,#7C3AED)",
+  "linear-gradient(135deg,#EC4899,#DB2777)",
+  "linear-gradient(135deg,#3B82F6,#2563EB)",
+  "linear-gradient(135deg,#F59E0B,#D97706)",
+  "linear-gradient(135deg,#10B981,#059669)",
+  "linear-gradient(135deg,#8B5CF6,#7C3AED)",
+  "linear-gradient(135deg,#EC4899,#DB2777)",
+  "linear-gradient(135deg,#3B82F6,#2563EB)",
+];
+
 function FloatingDot({
   x,
   y,
@@ -54,19 +67,483 @@ function FloatingDot({
   );
 }
 
+type PinDialogProps = {
+  onSuccess: () => void;
+  onClose: () => void;
+  storedPin: string;
+};
+
+function PinDialog({ onSuccess, onClose, storedPin }: PinDialogProps) {
+  const [digits, setDigits] = useState("");
+  const [shake, setShake] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
+  const shakeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const press = (d: string) => {
+    if (digits.length >= 4) return;
+    const next = digits + d;
+    setDigits(next);
+    setErrMsg("");
+    if (next.length === 4) {
+      if (next === storedPin) {
+        setTimeout(() => onSuccess(), 200);
+      } else {
+        if (shakeTimeout.current) clearTimeout(shakeTimeout.current);
+        setShake(true);
+        setErrMsg("Oops! Try again 🙈");
+        shakeTimeout.current = setTimeout(() => {
+          setShake(false);
+          setDigits("");
+          setErrMsg("");
+        }, 900);
+      }
+    }
+  };
+
+  const backspace = () => {
+    setDigits((d) => d.slice(0, -1));
+    setErrMsg("");
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      data-ocid="family.modal"
+    >
+      <motion.div
+        initial={{ scale: 0.85, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.85, opacity: 0 }}
+        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+        className="rounded-3xl p-7 mx-5 max-w-xs w-full shadow-2xl"
+        style={{ backgroundColor: "#FFF9F0", border: "4px solid #8B5CF6" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="text-center mb-5">
+          <p className="text-4xl mb-1">🔒</p>
+          <h3 className="text-xl font-black" style={{ color: "#4C1D95" }}>
+            Parent Settings
+          </h3>
+          <p
+            className="text-xs font-semibold mt-1"
+            style={{ color: "#78716C" }}
+          >
+            Enter your 4-digit PIN
+          </p>
+        </div>
+
+        {/* Dots display */}
+        <motion.div
+          animate={shake ? { x: [-8, 8, -6, 6, -4, 4, 0] } : {}}
+          transition={{ duration: 0.45 }}
+          className="flex justify-center gap-4 mb-4"
+        >
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="w-5 h-5 rounded-full border-2 transition-all duration-150"
+              style={{
+                backgroundColor: digits.length > i ? "#8B5CF6" : "transparent",
+                borderColor: "#8B5CF6",
+                transform: digits.length > i ? "scale(1.2)" : "scale(1)",
+              }}
+            />
+          ))}
+        </motion.div>
+
+        {/* Error message */}
+        <AnimatePresence>
+          {errMsg && (
+            <motion.p
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-center text-sm font-black mb-3"
+              style={{ color: "#EF4444" }}
+              data-ocid="family.error_state"
+            >
+              {errMsg}
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        {/* Keypad */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n, i) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => press(String(n))}
+              className="rounded-2xl py-4 font-black text-xl text-white transition-transform active:scale-90"
+              style={{ background: PIN_COLORS[i % PIN_COLORS.length] }}
+              data-ocid={"family.button"}
+            >
+              {n}
+            </button>
+          ))}
+          {/* Row: empty | 0 | backspace */}
+          <div />
+          <button
+            type="button"
+            onClick={() => press("0")}
+            className="rounded-2xl py-4 font-black text-xl text-white transition-transform active:scale-90"
+            style={{ background: "linear-gradient(135deg,#EC4899,#DB2777)" }}
+            data-ocid="family.button"
+          >
+            0
+          </button>
+          <button
+            type="button"
+            onClick={backspace}
+            className="rounded-2xl py-4 font-black text-xl transition-transform active:scale-90"
+            style={{ backgroundColor: "#F3F4F6", color: "#374151" }}
+            data-ocid="family.cancel_button"
+          >
+            ⌫
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full rounded-2xl py-2.5 font-bold text-sm"
+          style={{ backgroundColor: "#F3F4F6", color: "#6B7280" }}
+          data-ocid="family.close_button"
+        >
+          Cancel
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+type ParentSettingsProps = {
+  parentPhone: string;
+  onPhoneChange: (v: string) => void;
+  safeZones: { id: string; name: string; address: string }[];
+  onAddZone: (name: string, address: string) => void;
+  onRemoveZone: (id: string) => void;
+  currentPin: string;
+  onPinChange: (v: string) => void;
+  onClose: () => void;
+};
+
+function ParentSettingsPanel({
+  parentPhone,
+  onPhoneChange,
+  safeZones,
+  onAddZone,
+  onRemoveZone,
+  currentPin,
+  onPinChange,
+  onClose,
+}: ParentSettingsProps) {
+  const [phoneInput, setPhoneInput] = useState(parentPhone);
+  const [phoneSaved, setPhoneSaved] = useState(false);
+  const [zoneName, setZoneName] = useState("");
+  const [zoneAddress, setZoneAddress] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [pinMsg, setPinMsg] = useState("");
+
+  const savePhone = () => {
+    if (!phoneInput.trim()) return;
+    onPhoneChange(phoneInput.trim());
+    setPhoneSaved(true);
+    setTimeout(() => setPhoneSaved(false), 2500);
+  };
+
+  const addZone = () => {
+    if (!zoneName.trim() || !zoneAddress.trim()) return;
+    if (safeZones.length >= 5) return;
+    onAddZone(zoneName.trim(), zoneAddress.trim());
+    setZoneName("");
+    setZoneAddress("");
+  };
+
+  const savePin = () => {
+    if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+      setPinMsg("❌ PIN must be exactly 4 digits");
+      setTimeout(() => setPinMsg(""), 2500);
+      return;
+    }
+    if (newPin !== confirmPin) {
+      setPinMsg("❌ PINs don't match — try again");
+      setTimeout(() => setPinMsg(""), 2500);
+      return;
+    }
+    onPinChange(newPin);
+    setNewPin("");
+    setConfirmPin("");
+    setPinMsg("✅ PIN updated!");
+    setTimeout(() => setPinMsg(""), 2500);
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[9990] flex items-end sm:items-center justify-center"
+      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      data-ocid="family.dialog"
+    >
+      <motion.div
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 60, opacity: 0 }}
+        transition={{ type: "spring", damping: 22, stiffness: 280 }}
+        className="w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto"
+        style={{ backgroundColor: "#FFF9F0", border: "4px solid #F59E0B" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">⚙️</span>
+            <h3 className="text-xl font-black" style={{ color: "#92400E" }}>
+              Parent Settings
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-9 h-9 rounded-full flex items-center justify-center font-black text-lg transition-transform active:scale-90"
+            style={{ backgroundColor: "#FEF3C7", color: "#D97706" }}
+            data-ocid="family.close_button"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Phone Number */}
+        <div
+          className="rounded-2xl p-4 mb-4"
+          style={{ backgroundColor: "#FEF9C3", border: "3px solid #F59E0B" }}
+        >
+          <h4 className="font-black text-sm mb-2" style={{ color: "#92400E" }}>
+            📞 Parent Phone Number
+          </h4>
+          <div className="flex gap-2">
+            <input
+              type="tel"
+              value={phoneInput}
+              onChange={(e) => {
+                setPhoneInput(e.target.value);
+                setPhoneSaved(false);
+              }}
+              placeholder="Parent's Phone Number"
+              data-ocid="family.input"
+              className="flex-1 rounded-xl px-3 py-2 font-semibold outline-none text-sm"
+              style={{
+                border: "2px solid #F59E0B",
+                backgroundColor: "white",
+                color: "#44403C",
+              }}
+            />
+            <button
+              type="button"
+              onClick={savePhone}
+              data-ocid="family.save_button"
+              className="rounded-xl px-4 py-2 font-black text-sm transition-transform active:scale-95 text-white"
+              style={{
+                background: "linear-gradient(135deg, #F59E0B, #D97706)",
+              }}
+            >
+              SAVE
+            </button>
+          </div>
+          <AnimatePresence>
+            {phoneSaved && (
+              <motion.p
+                initial={{ opacity: 0, y: 3 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-1.5 text-xs font-bold"
+                style={{ color: "#065F46" }}
+                data-ocid="family.success_state"
+              >
+                ✅ Phone number saved!
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Safe Zones */}
+        <div
+          className="rounded-2xl p-4 mb-4"
+          style={{ backgroundColor: "#EDE9FE", border: "3px solid #8B5CF6" }}
+        >
+          <h4 className="font-black text-sm mb-3" style={{ color: "#4C1D95" }}>
+            🏠 Safe Zones ({safeZones.length}/5)
+          </h4>
+          {safeZones.length < 5 && (
+            <div className="space-y-2 mb-3">
+              <input
+                type="text"
+                value={zoneName}
+                onChange={(e) => setZoneName(e.target.value)}
+                placeholder="Zone name (e.g. Home, School)"
+                data-ocid="family.search_input"
+                className="w-full rounded-xl px-3 py-2 font-semibold outline-none text-sm"
+                style={{
+                  border: "2px solid #8B5CF6",
+                  backgroundColor: "white",
+                  color: "#2D1B69",
+                }}
+              />
+              <input
+                type="text"
+                value={zoneAddress}
+                onChange={(e) => setZoneAddress(e.target.value)}
+                placeholder="Address"
+                data-ocid="family.textarea"
+                className="w-full rounded-xl px-3 py-2 font-semibold outline-none text-sm"
+                style={{
+                  border: "2px solid #8B5CF6",
+                  backgroundColor: "white",
+                  color: "#2D1B69",
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") addZone();
+                }}
+              />
+              <button
+                type="button"
+                onClick={addZone}
+                data-ocid="family.open_modal_button"
+                className="w-full rounded-xl py-2 font-black text-sm text-white transition-transform active:scale-95"
+                style={{
+                  background: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
+                }}
+              >
+                + ADD ZONE
+              </button>
+            </div>
+          )}
+          {safeZones.length === 0 ? (
+            <p
+              className="text-center text-xs font-semibold py-2"
+              style={{ color: "#7C3AED" }}
+              data-ocid="family.empty_state"
+            >
+              🌟 No safe zones yet — add your first one!
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {safeZones.map((zone, idx) => (
+                <div
+                  key={zone.id}
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1 font-semibold text-xs"
+                  style={{
+                    backgroundColor: "white",
+                    border: "2px solid #8B5CF6",
+                    color: "#4C1D95",
+                  }}
+                  data-ocid={`family.item.${idx + 1}`}
+                >
+                  <span>🏠 {zone.name}</span>
+                  <span style={{ color: "#A78BFA" }}>·</span>
+                  <span className="opacity-70">{zone.address}</span>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveZone(zone.id)}
+                    data-ocid={`family.delete_button.${idx + 1}`}
+                    className="ml-1 text-red-400 hover:text-red-600 font-black text-xs leading-none transition-colors"
+                    aria-label={`Remove ${zone.name}`}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Change PIN */}
+        <div
+          className="rounded-2xl p-4 mb-2"
+          style={{ backgroundColor: "#FCE7F3", border: "3px solid #EC4899" }}
+        >
+          <h4 className="font-black text-sm mb-2" style={{ color: "#831843" }}>
+            🔑 Change PIN (current: {currentPin})
+          </h4>
+          <div className="space-y-2">
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={newPin}
+              onChange={(e) =>
+                setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))
+              }
+              placeholder="New 4-digit PIN"
+              className="w-full rounded-xl px-3 py-2 font-semibold outline-none text-sm"
+              style={{
+                border: "2px solid #EC4899",
+                backgroundColor: "white",
+                color: "#44403C",
+              }}
+            />
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={confirmPin}
+              onChange={(e) =>
+                setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 4))
+              }
+              placeholder="Confirm new PIN"
+              className="w-full rounded-xl px-3 py-2 font-semibold outline-none text-sm"
+              style={{
+                border: "2px solid #EC4899",
+                backgroundColor: "white",
+                color: "#44403C",
+              }}
+            />
+            <button
+              type="button"
+              onClick={savePin}
+              className="w-full rounded-xl py-2 font-black text-sm text-white transition-transform active:scale-95"
+              style={{
+                background: "linear-gradient(135deg, #EC4899, #DB2777)",
+              }}
+              data-ocid="family.submit_button"
+            >
+              UPDATE PIN 🔑
+            </button>
+          </div>
+          <AnimatePresence>
+            {pinMsg && (
+              <motion.p
+                initial={{ opacity: 0, y: 3 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-1.5 text-xs font-bold"
+                style={{
+                  color: pinMsg.startsWith("✅") ? "#065F46" : "#EF4444",
+                }}
+              >
+                {pinMsg}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function FamilySafetyTab() {
   const [parentPhone, setParentPhone] = useState(
     () => localStorage.getItem("bg_parent_phone") ?? "",
   );
-  const [phoneInput, setPhoneInput] = useState(
-    () => localStorage.getItem("bg_parent_phone") ?? "",
-  );
-  const [phoneSaved, setPhoneSaved] = useState(
-    () => !!localStorage.getItem("bg_parent_phone"),
-  );
-  const [safeMsg, setSafeMsg] = useState("");
-  const [zoneName, setZoneName] = useState("");
-  const [zoneAddress, setZoneAddress] = useState("");
   const [safeZones, setSafeZones] = useState<
     { id: string; name: string; address: string }[]
   >(() => {
@@ -76,20 +553,45 @@ export default function FamilySafetyTab() {
       return [];
     }
   });
+  const [pin, setPin] = useState(
+    () => localStorage.getItem("bg_parent_pin") ?? "0000",
+  );
+  const [safeMsg, setSafeMsg] = useState("");
   const [callConfirm, setCallConfirm] = useState<null | {
     label: string;
     href: string;
   }>(null);
+  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("bg_safe_zones", JSON.stringify(safeZones));
   }, [safeZones]);
 
-  const savePhone = () => {
-    if (!phoneInput.trim()) return;
-    localStorage.setItem("bg_parent_phone", phoneInput.trim());
-    setParentPhone(phoneInput.trim());
-    setPhoneSaved(true);
+  const handlePhoneChange = (v: string) => {
+    setParentPhone(v);
+    localStorage.setItem("bg_parent_phone", v);
+  };
+
+  const handlePinChange = (v: string) => {
+    setPin(v);
+    localStorage.setItem("bg_parent_pin", v);
+  };
+
+  const handleAddZone = (name: string, address: string) => {
+    setSafeZones((prev) => [
+      ...prev,
+      { id: `zone-${Date.now()}`, name, address },
+    ]);
+  };
+
+  const handleRemoveZone = (id: string) => {
+    setSafeZones((prev) => prev.filter((z) => z.id !== id));
+  };
+
+  const handlePinSuccess = () => {
+    setShowPinDialog(false);
+    setShowSettings(true);
   };
 
   const handleCheckIn = () => {
@@ -134,25 +636,6 @@ export default function FamilySafetyTab() {
     setCallConfirm({ label: "Call 911", href: "tel:911" });
   };
 
-  const addZone = () => {
-    if (!zoneName.trim() || !zoneAddress.trim()) return;
-    if (safeZones.length >= 5) return;
-    setSafeZones((prev) => [
-      ...prev,
-      {
-        id: `zone-${Date.now()}`,
-        name: zoneName.trim(),
-        address: zoneAddress.trim(),
-      },
-    ]);
-    setZoneName("");
-    setZoneAddress("");
-  };
-
-  const removeZone = (id: string) => {
-    setSafeZones((prev) => prev.filter((z) => z.id !== id));
-  };
-
   return (
     <div
       className="relative min-h-screen overflow-hidden"
@@ -190,63 +673,32 @@ export default function FamilySafetyTab() {
           </p>
         </motion.div>
 
-        {/* Parent Phone Setup */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="rounded-2xl p-5"
-          style={{ backgroundColor: "#FEF9C3", border: "3px solid #F59E0B" }}
-          data-ocid="family.card"
-        >
-          <h2 className="text-lg font-black mb-3" style={{ color: "#92400E" }}>
-            📞 Parent Phone Setup
-          </h2>
-          <div className="flex gap-2">
-            <input
-              type="tel"
-              value={phoneInput}
-              onChange={(e) => {
-                setPhoneInput(e.target.value);
-                setPhoneSaved(false);
-              }}
-              placeholder="Parent's Phone Number"
-              data-ocid="family.input"
-              className="flex-1 rounded-xl px-4 py-2.5 font-semibold outline-none text-sm"
-              style={{
-                border: "2px solid #F59E0B",
-                backgroundColor: "white",
-                color: "#44403C",
-              }}
-            />
-            <button
-              type="button"
-              onClick={savePhone}
-              data-ocid="family.save_button"
-              className="rounded-xl px-5 py-2.5 font-black text-sm transition-transform active:scale-95"
-              style={{
-                background: "linear-gradient(135deg, #F59E0B, #D97706)",
-                color: "white",
-              }}
+        {/* Parent phone display (read-only, locked) */}
+        {parentPhone && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="rounded-2xl px-5 py-3 flex items-center gap-3"
+            style={{ backgroundColor: "#FEF9C3", border: "3px solid #F59E0B" }}
+          >
+            <span className="text-xl">📞</span>
+            <div className="flex-1">
+              <p className="text-xs font-bold" style={{ color: "#92400E" }}>
+                Parent Number
+              </p>
+              <p className="text-sm font-black" style={{ color: "#44403C" }}>
+                {parentPhone}
+              </p>
+            </div>
+            <div
+              className="text-xs font-bold px-2 py-1 rounded-full"
+              style={{ backgroundColor: "#D1FAE5", color: "#065F46" }}
             >
-              SAVE
-            </button>
-          </div>
-          <AnimatePresence>
-            {phoneSaved && (
-              <motion.p
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                className="mt-2 text-sm font-bold"
-                style={{ color: "#065F46" }}
-                data-ocid="family.success_state"
-              >
-                ✅ Parent connected!
-              </motion.p>
-            )}
-          </AnimatePresence>
-        </motion.div>
+              ✅ Connected
+            </div>
+          </motion.div>
+        )}
 
         {/* Feedback message */}
         <AnimatePresence>
@@ -325,72 +777,23 @@ export default function FamilySafetyTab() {
           🚨 CALL 911
         </motion.button>
 
-        {/* Safe Zones */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.35 }}
-          className="rounded-2xl p-5"
-          style={{ backgroundColor: "#EDE9FE", border: "3px solid #8B5CF6" }}
-        >
-          <h2 className="text-lg font-black mb-4" style={{ color: "#4C1D95" }}>
-            🏠 Safe Zones
-          </h2>
-          {safeZones.length < 5 && (
-            <div className="space-y-2 mb-4">
-              <input
-                type="text"
-                value={zoneName}
-                onChange={(e) => setZoneName(e.target.value)}
-                placeholder="Zone name (e.g. Home, School)"
-                data-ocid="family.search_input"
-                className="w-full rounded-xl px-4 py-2.5 font-semibold outline-none text-sm"
-                style={{
-                  border: "2px solid #8B5CF6",
-                  backgroundColor: "white",
-                  color: "#2D1B69",
-                }}
-              />
-              <input
-                type="text"
-                value={zoneAddress}
-                onChange={(e) => setZoneAddress(e.target.value)}
-                placeholder="Address"
-                data-ocid="family.textarea"
-                className="w-full rounded-xl px-4 py-2.5 font-semibold outline-none text-sm"
-                style={{
-                  border: "2px solid #8B5CF6",
-                  backgroundColor: "white",
-                  color: "#2D1B69",
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") addZone();
-                }}
-              />
-              <button
-                type="button"
-                onClick={addZone}
-                data-ocid="family.open_modal_button"
-                className="w-full rounded-xl py-2.5 font-black text-sm text-white transition-transform active:scale-95"
-                style={{
-                  background: "linear-gradient(135deg, #8B5CF6, #7C3AED)",
-                }}
-              >
-                + ADD ZONE
-              </button>
-            </div>
-          )}
-          {safeZones.length === 0 ? (
-            <p
-              className="text-center text-sm font-semibold py-3"
-              style={{ color: "#7C3AED" }}
-              data-ocid="family.empty_state"
+        {/* Safe Zones display (read-only) */}
+        {safeZones.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.35 }}
+            className="rounded-2xl p-4"
+            style={{ backgroundColor: "#EDE9FE", border: "3px solid #8B5CF6" }}
+          >
+            <h2
+              className="text-sm font-black mb-3"
+              style={{ color: "#4C1D95" }}
             >
-              🌟 No safe zones yet — add your first one!
-            </p>
-          ) : (
+              🏠 Safe Zones
+            </h2>
             <div className="flex flex-wrap gap-2">
-              {safeZones.map((zone, idx) => (
+              {safeZones.map((zone) => (
                 <div
                   key={zone.id}
                   className="flex items-center gap-2 rounded-full px-3 py-1.5 font-semibold text-xs"
@@ -399,33 +802,15 @@ export default function FamilySafetyTab() {
                     border: "2px solid #8B5CF6",
                     color: "#4C1D95",
                   }}
-                  data-ocid={`family.item.${idx + 1}`}
                 >
                   <span>🏠 {zone.name}</span>
                   <span style={{ color: "#A78BFA" }}>·</span>
                   <span className="opacity-70">{zone.address}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeZone(zone.id)}
-                    data-ocid={`family.delete_button.${idx + 1}`}
-                    className="ml-1 text-red-400 hover:text-red-600 font-black text-xs leading-none transition-colors"
-                    aria-label={`Remove ${zone.name}`}
-                  >
-                    ✕
-                  </button>
                 </div>
               ))}
             </div>
-          )}
-          {safeZones.length >= 5 && (
-            <p
-              className="text-xs font-semibold mt-2"
-              style={{ color: "#7C3AED" }}
-            >
-              Max 5 zones reached
-            </p>
-          )}
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* Safety Tips */}
         <motion.div
@@ -463,7 +848,36 @@ export default function FamilySafetyTab() {
           </div>
         </motion.div>
 
-        {/* Footer blurb */}
+        {/* Parent Settings Lock Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.55 }}
+          className="rounded-2xl p-5"
+          style={{ backgroundColor: "#F0FDF4", border: "3px dashed #10B981" }}
+        >
+          <div className="text-center">
+            <p
+              className="text-xs font-semibold mb-3"
+              style={{ color: "#065F46" }}
+            >
+              Parents: manage phone number, safe zones & PIN
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowPinDialog(true)}
+              className="inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-black text-sm text-white transition-transform active:scale-95 shadow-md"
+              style={{
+                background: "linear-gradient(135deg, #10B981, #059669)",
+              }}
+              data-ocid="family.open_modal_button"
+            >
+              🔒 Parent Settings
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Footer */}
         <p
           className="text-center text-xs font-semibold pb-4"
           style={{ color: "#A89884" }}
@@ -471,6 +885,33 @@ export default function FamilySafetyTab() {
           🌈 BLACKGRID Family Safety Zone — powered by love ❤️
         </p>
       </div>
+
+      {/* PIN Dialog */}
+      <AnimatePresence>
+        {showPinDialog && (
+          <PinDialog
+            storedPin={pin}
+            onSuccess={handlePinSuccess}
+            onClose={() => setShowPinDialog(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Parent Settings Panel */}
+      <AnimatePresence>
+        {showSettings && (
+          <ParentSettingsPanel
+            parentPhone={parentPhone}
+            onPhoneChange={handlePhoneChange}
+            safeZones={safeZones}
+            onAddZone={handleAddZone}
+            onRemoveZone={handleRemoveZone}
+            currentPin={pin}
+            onPinChange={handlePinChange}
+            onClose={() => setShowSettings(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Call Confirmation Dialog */}
       <AnimatePresence>
