@@ -41,6 +41,8 @@ interface Guard {
   signal: string;
   bio: string;
   yearsExp: number;
+  mapX: number;
+  mapY: number;
 }
 
 const GUARDS: Guard[] = [
@@ -57,6 +59,8 @@ const GUARDS: Guard[] = [
     signal: "@marcust_security",
     bio: "Former US Secret Service, 12 years close protection for executives and dignitaries across 30+ countries.",
     yearsExp: 12,
+    mapX: 48,
+    mapY: 52,
   },
   {
     id: 2,
@@ -71,6 +75,8 @@ const GUARDS: Guard[] = [
     signal: "@devonr_ep",
     bio: "Ex-Navy SEAL, specialized in high-risk executive transport and threat neutralization in urban environments.",
     yearsExp: 9,
+    mapX: 55,
+    mapY: 45,
   },
   {
     id: 3,
@@ -85,6 +91,8 @@ const GUARDS: Guard[] = [
     signal: "@aliciam_ops",
     bio: "Certified CPO with background in law enforcement. Specialist in female executive and celebrity protection.",
     yearsExp: 8,
+    mapX: 42,
+    mapY: 58,
   },
   {
     id: 4,
@@ -99,6 +107,8 @@ const GUARDS: Guard[] = [
     signal: "@jordank_events",
     bio: "10 years event security for private galas, tech summits, and nightlife venues across the Bay Area.",
     yearsExp: 10,
+    mapX: 38,
+    mapY: 42,
   },
   {
     id: 5,
@@ -113,6 +123,8 @@ const GUARDS: Guard[] = [
     signal: "@stefanv_intel",
     bio: "Former DIA intelligence analyst. Provides pre-operational threat assessment and risk mitigation planning.",
     yearsExp: 15,
+    mapX: 65,
+    mapY: 35,
   },
   {
     id: 6,
@@ -127,6 +139,8 @@ const GUARDS: Guard[] = [
     signal: "@reynal_patrol",
     bio: "SFPD veteran, 8 years patrol. Specializes in residential mobile security sweeps and neighborhood intelligence.",
     yearsExp: 8,
+    mapX: 52,
+    mapY: 60,
   },
   {
     id: 7,
@@ -141,6 +155,8 @@ const GUARDS: Guard[] = [
     signal: "@tariqb_secure",
     bio: "Certified event security manager with expertise in crowd control, VIP access management, and crisis response.",
     yearsExp: 7,
+    mapX: 30,
+    mapY: 55,
   },
   {
     id: 8,
@@ -155,6 +171,8 @@ const GUARDS: Guard[] = [
     signal: "@colea_residential",
     bio: "Marine Corps veteran, specialized in estate and residential protection, perimeter security, and access control.",
     yearsExp: 11,
+    mapX: 78,
+    mapY: 72,
   },
 ];
 
@@ -164,6 +182,342 @@ const FILTER_OPTIONS: FilterOption[] = [
   "CLOSE PROTECTION",
   "EVENT SECURITY",
 ];
+
+const CITY_BLOCKS = [
+  { x: 5, y: 5, w: 22, h: 14, key: "block-nw1" },
+  { x: 30, y: 5, w: 18, h: 10, key: "block-n2" },
+  { x: 52, y: 5, w: 25, h: 12, key: "block-ne3" },
+  { x: 80, y: 5, w: 15, h: 16, key: "block-ne4" },
+  { x: 5, y: 25, w: 30, h: 16, key: "block-w5" },
+  { x: 40, y: 22, w: 20, h: 18, key: "block-c6" },
+  { x: 65, y: 24, w: 28, h: 14, key: "block-e7" },
+  { x: 5, y: 48, w: 18, h: 20, key: "block-sw8" },
+  { x: 28, y: 48, w: 22, h: 14, key: "block-s9" },
+  { x: 55, y: 45, w: 18, h: 22, key: "block-sc10" },
+  { x: 78, y: 45, w: 17, h: 18, key: "block-se11" },
+  { x: 5, y: 75, w: 28, h: 18, key: "block-ssw12" },
+  { x: 38, y: 70, w: 20, h: 24, key: "block-ss13" },
+  { x: 63, y: 72, w: 16, h: 22, key: "block-sse14" },
+  { x: 83, y: 70, w: 12, h: 24, key: "block-sse15" },
+];
+
+const H_LINES = Array.from({ length: 20 }, (_, i) => ({
+  y: i * 5,
+  key: `hline-y${i * 5}`,
+}));
+const V_LINES = Array.from({ length: 20 }, (_, i) => ({
+  x: i * 5,
+  key: `vline-x${i * 5}`,
+}));
+
+function pinColor(availability: Availability): string {
+  if (availability === "available") return "#2ECC71";
+  if (availability === "on_duty") return "#C9A95C";
+  return "#7A0000";
+}
+
+function GuardMapPin({
+  guard,
+  index,
+}: {
+  guard: Guard;
+  index: number;
+}) {
+  const color = pinColor(guard.availability);
+  const isAvailable = guard.availability === "available";
+
+  return (
+    <g key={guard.id}>
+      {/* Pulsing ring for available guards */}
+      {isAvailable && (
+        <circle
+          cx={guard.mapX}
+          cy={guard.mapY}
+          r="3"
+          fill="none"
+          stroke={color}
+          strokeWidth="0.4"
+          opacity="0.35"
+        >
+          <animate
+            attributeName="r"
+            values="2.2;4;2.2"
+            dur="2s"
+            repeatCount="indefinite"
+          />
+          <animate
+            attributeName="opacity"
+            values="0.5;0;0.5"
+            dur="2s"
+            repeatCount="indefinite"
+          />
+        </circle>
+      )}
+      {/* Outer glow ring */}
+      <circle
+        cx={guard.mapX}
+        cy={guard.mapY}
+        r="2.2"
+        fill={color}
+        opacity="0.2"
+      />
+      {/* Pin dot */}
+      <circle
+        cx={guard.mapX}
+        cy={guard.mapY}
+        r="1.2"
+        fill={color}
+        opacity="0.95"
+      />
+      {/* Number label */}
+      <text
+        x={guard.mapX + 1.8}
+        y={guard.mapY - 1.8}
+        fill={color}
+        fontSize="2.4"
+        fontFamily="monospace"
+        fontWeight="bold"
+        opacity="0.9"
+      >
+        {index + 1}
+      </text>
+    </g>
+  );
+}
+
+function OperativePositionsMap() {
+  return (
+    <div data-ocid="guards.map.card">
+      {/* Section separator */}
+      <div className="flex items-center gap-3 mb-4">
+        <div
+          className="flex-1 h-px"
+          style={{
+            background:
+              "linear-gradient(to right, rgba(201,169,92,0.4), transparent)",
+          }}
+        />
+        <span
+          className="text-[#C9A95C] text-[9px] tracking-[0.3em] uppercase font-bold"
+          style={{ letterSpacing: "0.3em" }}
+        >
+          OPERATIVE GRID
+        </span>
+        <div
+          className="flex-1 h-px"
+          style={{
+            background:
+              "linear-gradient(to left, rgba(201,169,92,0.4), transparent)",
+          }}
+        />
+      </div>
+
+      <div
+        className="rounded overflow-hidden"
+        style={{
+          background: "#0D0D0D",
+          border: "1px solid rgba(201,169,92,0.3)",
+          boxShadow:
+            "0 0 32px rgba(201,169,92,0.06), 0 0 8px rgba(201,169,92,0.04)",
+        }}
+      >
+        {/* Map header */}
+        <div
+          className="flex items-center justify-between px-4 py-3"
+          style={{ borderBottom: "1px solid rgba(201,169,92,0.12)" }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#C00000] animate-pulse" />
+            <span className="text-[#EDEDED] text-[10px] tracking-[0.25em] uppercase font-medium">
+              OPERATIVE POSITIONS — LIVE
+            </span>
+            <span className="text-[#C9A95C] text-[10px] tracking-wider">
+              | SAN FRANCISCO
+            </span>
+          </div>
+          <span className="text-[9px] tracking-widest text-[#555] uppercase">
+            REAL-TIME
+          </span>
+        </div>
+
+        {/* SVG map */}
+        <div className="relative w-full" style={{ paddingBottom: "40%" }}>
+          <svg
+            className="absolute inset-0 w-full h-full"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            xmlns="http://www.w3.org/2000/svg"
+            role="img"
+            aria-label="Operative positions map — San Francisco"
+          >
+            <title>Operative Positions — San Francisco</title>
+            {/* Background */}
+            <rect width="100" height="100" fill="#0A0A0A" />
+
+            {/* Grid lines */}
+            {H_LINES.map((line) => (
+              <line
+                key={line.key}
+                x1="0"
+                y1={line.y}
+                x2="100"
+                y2={line.y}
+                stroke="#C9A95C"
+                strokeOpacity="0.06"
+                strokeWidth="0.2"
+              />
+            ))}
+            {V_LINES.map((line) => (
+              <line
+                key={line.key}
+                x1={line.x}
+                y1="0"
+                x2={line.x}
+                y2="100"
+                stroke="#C9A95C"
+                strokeOpacity="0.06"
+                strokeWidth="0.2"
+              />
+            ))}
+
+            {/* City blocks */}
+            {CITY_BLOCKS.map((block) => (
+              <rect
+                key={block.key}
+                x={block.x}
+                y={block.y}
+                width={block.w}
+                height={block.h}
+                fill="#1A1A1A"
+                stroke="#2A2A2A"
+                strokeWidth="0.3"
+              />
+            ))}
+
+            {/* Risk zone overlays */}
+            <rect
+              x="5"
+              y="25"
+              width="30"
+              height="16"
+              fill="#7A0000"
+              fillOpacity="0.12"
+            />
+            <rect
+              x="5"
+              y="48"
+              width="18"
+              height="20"
+              fill="#7A0000"
+              fillOpacity="0.1"
+            />
+
+            {/* Street labels */}
+            <text
+              x="30"
+              y="72"
+              fill="#C9A95C"
+              opacity="0.45"
+              fontSize="2.8"
+              fontFamily="monospace"
+              transform="rotate(-30, 30, 72)"
+            >
+              Market St
+            </text>
+            <text
+              x="28"
+              y="78"
+              fill="#C9A95C"
+              opacity="0.45"
+              fontSize="2.8"
+              fontFamily="monospace"
+              transform="rotate(-30, 28, 78)"
+            >
+              Mission St
+            </text>
+            <text
+              x="52"
+              y="55"
+              fill="#C9A95C"
+              opacity="0.45"
+              fontSize="2.8"
+              fontFamily="monospace"
+              transform="rotate(-90, 52, 55)"
+            >
+              Van Ness Ave
+            </text>
+            <text
+              x="40"
+              y="62"
+              fill="#C9A95C"
+              opacity="0.45"
+              fontSize="2.8"
+              fontFamily="monospace"
+            >
+              Howard St
+            </text>
+            <text
+              x="65"
+              y="30"
+              fill="#C9A95C"
+              opacity="0.45"
+              fontSize="2.8"
+              fontFamily="monospace"
+            >
+              Geary Blvd
+            </text>
+            <text
+              x="72"
+              y="38"
+              fill="#C9A95C"
+              opacity="0.45"
+              fontSize="2.8"
+              fontFamily="monospace"
+              transform="rotate(-90, 72, 38)"
+            >
+              Divisadero
+            </text>
+
+            {/* Guard pins */}
+            {GUARDS.map((guard, i) => (
+              <GuardMapPin key={guard.id} guard={guard} index={i} />
+            ))}
+          </svg>
+        </div>
+
+        {/* Legend */}
+        <div
+          className="flex items-center gap-6 px-4 py-3"
+          style={{ borderTop: "1px solid rgba(201,169,92,0.1)" }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#2ECC71]" />
+            <span className="text-[#2ECC71] text-[9px] tracking-widest uppercase">
+              Available
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#C9A95C]" />
+            <span className="text-[#C9A95C] text-[9px] tracking-widest uppercase">
+              On Duty
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#7A0000]" />
+            <span className="text-[#888] text-[9px] tracking-widest uppercase">
+              Offline
+            </span>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-[#444] text-[9px] tracking-widest uppercase">
+              {GUARDS.length} OPERATIVES TRACKED
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AvailabilityDot({ status }: { status: Availability }) {
   if (status === "available") {
@@ -627,6 +981,9 @@ export default function BodyguardDirectory() {
           </span>
         </div>
       </div>
+
+      {/* Operative Positions Map */}
+      <OperativePositionsMap />
 
       {/* Guard grid */}
       {filteredGuards.length === 0 ? (
