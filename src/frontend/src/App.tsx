@@ -5,6 +5,7 @@ import { ApprovalStatus } from "./backend.d";
 import AdminPanel from "./components/AdminPanel";
 import BodyguardDirectory from "./components/BodyguardDirectory";
 import DashboardTab from "./components/DashboardTab";
+import EmergencyServices from "./components/EmergencyServices";
 import IntelligenceTab from "./components/IntelligenceTab";
 import LandingPage from "./components/LandingPage";
 import NetworkTab from "./components/NetworkTab";
@@ -921,6 +922,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      <EmergencyServices />
       <Toaster />
     </div>
   );
