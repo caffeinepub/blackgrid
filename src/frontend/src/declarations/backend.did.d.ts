@@ -10,6 +10,16 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export type ApprovalStatus = { 'pending' : null } |
+  { 'approved' : null } |
+  { 'rejected' : null };
+export interface AreaIncident {
+  'severity' : { 'low' : null } |
+    { 'severe' : null } |
+    { 'moderate' : null },
+  'location' : string,
+  'incidentType' : string,
+}
 export interface InviteCode {
   'created' : Time,
   'code' : string,
@@ -38,7 +48,42 @@ export interface RSVP {
   'timestamp' : Time,
   'attending' : boolean,
 }
+export interface ShoppingItem {
+  'productName' : string,
+  'currency' : string,
+  'quantity' : bigint,
+  'priceInCents' : bigint,
+  'productDescription' : string,
+}
+export interface StripeConfiguration {
+  'allowedCountries' : Array<string>,
+  'secretKey' : string,
+}
+export type StripeSessionStatus = {
+    'completed' : { 'userPrincipal' : [] | [string], 'response' : string }
+  } |
+  { 'failed' : { 'error' : string } };
+export interface SubscriptionRecord {
+  'buyer' : Principal,
+  'tier' : string,
+  'sessionId' : string,
+  'timestamp' : bigint,
+  'seen' : boolean,
+}
 export type Time = bigint;
+export interface TransformationInput {
+  'context' : Uint8Array,
+  'response' : http_request_result,
+}
+export interface TransformationOutput {
+  'status' : bigint,
+  'body' : Uint8Array,
+  'headers' : Array<http_header>,
+}
+export interface UserApprovalInfo {
+  'status' : ApprovalStatus,
+  'principal' : Principal,
+}
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
@@ -52,38 +97,47 @@ export interface WatchlistEntry {
   'targetName' : string,
   'interactionHistory' : Array<[bigint, string]>,
 }
+export interface http_header { 'value' : string, 'name' : string }
+export interface http_request_result {
+  'status' : bigint,
+  'body' : Uint8Array,
+  'headers' : Array<http_header>,
+}
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addWatchlistEntry' : ActorMethod<[WatchlistEntry], bigint>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'createCheckoutSession' : ActorMethod<
+    [Array<ShoppingItem>, string, string],
+    string
+  >,
   'generateInviteCode' : ActorMethod<[], string>,
   'getAllRSVPs' : ActorMethod<[], Array<RSVP>>,
-  'getAreaIncidents' : ActorMethod<
-    [],
-    Array<
-      {
-        'severity' : { 'low' : null } |
-          { 'severe' : null } |
-          { 'moderate' : null },
-        'location' : string,
-        'incidentType' : string,
-      }
-    >
-  >,
+  'getAllUsers' : ActorMethod<[], Array<Profile>>,
+  'getAreaIncidents' : ActorMethod<[], Array<AreaIncident>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [Profile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getInviteCodes' : ActorMethod<[], Array<InviteCode>>,
-  'getProfile' : ActorMethod<[], Profile>,
+  'getStripeSessionStatus' : ActorMethod<[string], StripeSessionStatus>,
+  'getSubscriptionPurchases' : ActorMethod<[], Array<SubscriptionRecord>>,
   'getUnreadAlertCount' : ActorMethod<[], bigint>,
   'getUserProfile' : ActorMethod<[Principal], [] | [Profile]>,
   'getWatchlist' : ActorMethod<[], Array<WatchlistEntry>>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  'isEliteSubscriber' : ActorMethod<[], boolean>,
+  'isCallerApproved' : ActorMethod<[], boolean>,
+  'isEliteTierSubscriber' : ActorMethod<[], boolean>,
+  'isStripeConfigured' : ActorMethod<[], boolean>,
+  'listApprovals' : ActorMethod<[], Array<UserApprovalInfo>>,
   'markAlertRead' : ActorMethod<[bigint], undefined>,
+  'markPurchaseSeen' : ActorMethod<[string], undefined>,
+  'recordSubscriptionPurchase' : ActorMethod<[string, string], undefined>,
   'removeWatchlistEntry' : ActorMethod<[bigint], undefined>,
+  'requestApproval' : ActorMethod<[], undefined>,
   'saveCallerUserProfile' : ActorMethod<[Profile], undefined>,
+  'setApproval' : ActorMethod<[Principal, ApprovalStatus], undefined>,
+  'setStripeConfiguration' : ActorMethod<[StripeConfiguration], undefined>,
   'submitRSVP' : ActorMethod<[string, boolean, string], undefined>,
-  'updateProfile' : ActorMethod<[Profile], undefined>,
+  'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'updateWatchlistTag' : ActorMethod<
     [bigint, { 'avoid' : null } | { 'safe' : null } | { 'unknown' : null }],
     undefined

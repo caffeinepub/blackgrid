@@ -25,6 +25,13 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const ShoppingItem = IDL.Record({
+  'productName' : IDL.Text,
+  'currency' : IDL.Text,
+  'quantity' : IDL.Nat,
+  'priceInCents' : IDL.Nat,
+  'productDescription' : IDL.Text,
+});
 export const Time = IDL.Int;
 export const RSVP = IDL.Record({
   'name' : IDL.Text,
@@ -55,49 +62,106 @@ export const Profile = IDL.Record({
     'basic' : IDL.Null,
   }),
 });
+export const AreaIncident = IDL.Record({
+  'severity' : IDL.Variant({
+    'low' : IDL.Null,
+    'severe' : IDL.Null,
+    'moderate' : IDL.Null,
+  }),
+  'location' : IDL.Text,
+  'incidentType' : IDL.Text,
+});
 export const InviteCode = IDL.Record({
   'created' : Time,
   'code' : IDL.Text,
   'used' : IDL.Bool,
+});
+export const StripeSessionStatus = IDL.Variant({
+  'completed' : IDL.Record({
+    'userPrincipal' : IDL.Opt(IDL.Text),
+    'response' : IDL.Text,
+  }),
+  'failed' : IDL.Record({ 'error' : IDL.Text }),
+});
+export const SubscriptionRecord = IDL.Record({
+  'buyer' : IDL.Principal,
+  'tier' : IDL.Text,
+  'sessionId' : IDL.Text,
+  'timestamp' : IDL.Int,
+  'seen' : IDL.Bool,
+});
+export const ApprovalStatus = IDL.Variant({
+  'pending' : IDL.Null,
+  'approved' : IDL.Null,
+  'rejected' : IDL.Null,
+});
+export const UserApprovalInfo = IDL.Record({
+  'status' : ApprovalStatus,
+  'principal' : IDL.Principal,
+});
+export const StripeConfiguration = IDL.Record({
+  'allowedCountries' : IDL.Vec(IDL.Text),
+  'secretKey' : IDL.Text,
+});
+export const http_header = IDL.Record({
+  'value' : IDL.Text,
+  'name' : IDL.Text,
+});
+export const http_request_result = IDL.Record({
+  'status' : IDL.Nat,
+  'body' : IDL.Vec(IDL.Nat8),
+  'headers' : IDL.Vec(http_header),
+});
+export const TransformationInput = IDL.Record({
+  'context' : IDL.Vec(IDL.Nat8),
+  'response' : http_request_result,
+});
+export const TransformationOutput = IDL.Record({
+  'status' : IDL.Nat,
+  'body' : IDL.Vec(IDL.Nat8),
+  'headers' : IDL.Vec(http_header),
 });
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'addWatchlistEntry' : IDL.Func([WatchlistEntry], [IDL.Nat], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'createCheckoutSession' : IDL.Func(
+      [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
+      [IDL.Text],
+      [],
+    ),
   'generateInviteCode' : IDL.Func([], [IDL.Text], []),
   'getAllRSVPs' : IDL.Func([], [IDL.Vec(RSVP)], ['query']),
-  'getAreaIncidents' : IDL.Func(
-      [],
-      [
-        IDL.Vec(
-          IDL.Record({
-            'severity' : IDL.Variant({
-              'low' : IDL.Null,
-              'severe' : IDL.Null,
-              'moderate' : IDL.Null,
-            }),
-            'location' : IDL.Text,
-            'incidentType' : IDL.Text,
-          })
-        ),
-      ],
-      ['query'],
-    ),
+  'getAllUsers' : IDL.Func([], [IDL.Vec(Profile)], ['query']),
+  'getAreaIncidents' : IDL.Func([], [IDL.Vec(AreaIncident)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(Profile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getInviteCodes' : IDL.Func([], [IDL.Vec(InviteCode)], ['query']),
-  'getProfile' : IDL.Func([], [Profile], ['query']),
+  'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
+  'getSubscriptionPurchases' : IDL.Func([], [IDL.Vec(SubscriptionRecord)], ['query']),
   'getUnreadAlertCount' : IDL.Func([], [IDL.Nat], ['query']),
   'getUserProfile' : IDL.Func([IDL.Principal], [IDL.Opt(Profile)], ['query']),
   'getWatchlist' : IDL.Func([], [IDL.Vec(WatchlistEntry)], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'isEliteSubscriber' : IDL.Func([], [IDL.Bool], ['query']),
+  'isCallerApproved' : IDL.Func([], [IDL.Bool], ['query']),
+  'isEliteTierSubscriber' : IDL.Func([], [IDL.Bool], ['query']),
+  'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
+  'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
   'markAlertRead' : IDL.Func([IDL.Nat], [], []),
+  'markPurchaseSeen' : IDL.Func([IDL.Text], [], []),
+  'recordSubscriptionPurchase' : IDL.Func([IDL.Text, IDL.Text], [], []),
   'removeWatchlistEntry' : IDL.Func([IDL.Nat], [], []),
+  'requestApproval' : IDL.Func([], [], []),
   'saveCallerUserProfile' : IDL.Func([Profile], [], []),
+  'setApproval' : IDL.Func([IDL.Principal, ApprovalStatus], [], []),
+  'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
   'submitRSVP' : IDL.Func([IDL.Text, IDL.Bool, IDL.Text], [], []),
-  'updateProfile' : IDL.Func([Profile], [], []),
+  'transform' : IDL.Func(
+      [TransformationInput],
+      [TransformationOutput],
+      ['query'],
+    ),
   'updateWatchlistTag' : IDL.Func(
       [
         IDL.Nat,
@@ -132,6 +196,13 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const ShoppingItem = IDL.Record({
+    'productName' : IDL.Text,
+    'currency' : IDL.Text,
+    'quantity' : IDL.Nat,
+    'priceInCents' : IDL.Nat,
+    'productDescription' : IDL.Text,
+  });
   const Time = IDL.Int;
   const RSVP = IDL.Record({
     'name' : IDL.Text,
@@ -162,49 +233,103 @@ export const idlFactory = ({ IDL }) => {
       'basic' : IDL.Null,
     }),
   });
+  const AreaIncident = IDL.Record({
+    'severity' : IDL.Variant({
+      'low' : IDL.Null,
+      'severe' : IDL.Null,
+      'moderate' : IDL.Null,
+    }),
+    'location' : IDL.Text,
+    'incidentType' : IDL.Text,
+  });
   const InviteCode = IDL.Record({
     'created' : Time,
     'code' : IDL.Text,
     'used' : IDL.Bool,
+  });
+  const StripeSessionStatus = IDL.Variant({
+    'completed' : IDL.Record({
+      'userPrincipal' : IDL.Opt(IDL.Text),
+      'response' : IDL.Text,
+    }),
+    'failed' : IDL.Record({ 'error' : IDL.Text }),
+  });
+  const SubscriptionRecord = IDL.Record({
+    'buyer' : IDL.Principal,
+    'tier' : IDL.Text,
+    'sessionId' : IDL.Text,
+    'timestamp' : IDL.Int,
+    'seen' : IDL.Bool,
+  });
+  const ApprovalStatus = IDL.Variant({
+    'pending' : IDL.Null,
+    'approved' : IDL.Null,
+    'rejected' : IDL.Null,
+  });
+  const UserApprovalInfo = IDL.Record({
+    'status' : ApprovalStatus,
+    'principal' : IDL.Principal,
+  });
+  const StripeConfiguration = IDL.Record({
+    'allowedCountries' : IDL.Vec(IDL.Text),
+    'secretKey' : IDL.Text,
+  });
+  const http_header = IDL.Record({ 'value' : IDL.Text, 'name' : IDL.Text });
+  const http_request_result = IDL.Record({
+    'status' : IDL.Nat,
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(http_header),
+  });
+  const TransformationInput = IDL.Record({
+    'context' : IDL.Vec(IDL.Nat8),
+    'response' : http_request_result,
+  });
+  const TransformationOutput = IDL.Record({
+    'status' : IDL.Nat,
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(http_header),
   });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'addWatchlistEntry' : IDL.Func([WatchlistEntry], [IDL.Nat], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'createCheckoutSession' : IDL.Func(
+        [IDL.Vec(ShoppingItem), IDL.Text, IDL.Text],
+        [IDL.Text],
+        [],
+      ),
     'generateInviteCode' : IDL.Func([], [IDL.Text], []),
     'getAllRSVPs' : IDL.Func([], [IDL.Vec(RSVP)], ['query']),
-    'getAreaIncidents' : IDL.Func(
-        [],
-        [
-          IDL.Vec(
-            IDL.Record({
-              'severity' : IDL.Variant({
-                'low' : IDL.Null,
-                'severe' : IDL.Null,
-                'moderate' : IDL.Null,
-              }),
-              'location' : IDL.Text,
-              'incidentType' : IDL.Text,
-            })
-          ),
-        ],
-        ['query'],
-      ),
+    'getAllUsers' : IDL.Func([], [IDL.Vec(Profile)], ['query']),
+    'getAreaIncidents' : IDL.Func([], [IDL.Vec(AreaIncident)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(Profile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getInviteCodes' : IDL.Func([], [IDL.Vec(InviteCode)], ['query']),
-    'getProfile' : IDL.Func([], [Profile], ['query']),
+    'getStripeSessionStatus' : IDL.Func([IDL.Text], [StripeSessionStatus], []),
+    'getSubscriptionPurchases' : IDL.Func([], [IDL.Vec(SubscriptionRecord)], ['query']),
     'getUnreadAlertCount' : IDL.Func([], [IDL.Nat], ['query']),
     'getUserProfile' : IDL.Func([IDL.Principal], [IDL.Opt(Profile)], ['query']),
     'getWatchlist' : IDL.Func([], [IDL.Vec(WatchlistEntry)], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'isEliteSubscriber' : IDL.Func([], [IDL.Bool], ['query']),
+    'isCallerApproved' : IDL.Func([], [IDL.Bool], ['query']),
+    'isEliteTierSubscriber' : IDL.Func([], [IDL.Bool], ['query']),
+    'isStripeConfigured' : IDL.Func([], [IDL.Bool], ['query']),
+    'listApprovals' : IDL.Func([], [IDL.Vec(UserApprovalInfo)], ['query']),
     'markAlertRead' : IDL.Func([IDL.Nat], [], []),
+    'markPurchaseSeen' : IDL.Func([IDL.Text], [], []),
+    'recordSubscriptionPurchase' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'removeWatchlistEntry' : IDL.Func([IDL.Nat], [], []),
+    'requestApproval' : IDL.Func([], [], []),
     'saveCallerUserProfile' : IDL.Func([Profile], [], []),
+    'setApproval' : IDL.Func([IDL.Principal, ApprovalStatus], [], []),
+    'setStripeConfiguration' : IDL.Func([StripeConfiguration], [], []),
     'submitRSVP' : IDL.Func([IDL.Text, IDL.Bool, IDL.Text], [], []),
-    'updateProfile' : IDL.Func([Profile], [], []),
+    'transform' : IDL.Func(
+        [TransformationInput],
+        [TransformationOutput],
+        ['query'],
+      ),
     'updateWatchlistTag' : IDL.Func(
         [
           IDL.Nat,

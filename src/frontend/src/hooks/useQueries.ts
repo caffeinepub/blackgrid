@@ -1,5 +1,12 @@
+import type { Principal } from "@icp-sdk/core/principal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Variant_avoid_safe_unknown, WatchlistEntry } from "../backend.d";
+import type {
+  ApprovalStatus,
+  OffenderRecord,
+  UserApprovalInfo,
+  Variant_avoid_safe_unknown,
+  WatchlistEntry,
+} from "../backend.d";
 import { useActor } from "./useActor";
 
 export function useProfile() {
@@ -8,7 +15,7 @@ export function useProfile() {
     queryKey: ["profile"],
     queryFn: async () => {
       if (!actor) return null;
-      return actor.getProfile();
+      return actor.getCallerUserProfile();
     },
     enabled: !!actor && !isFetching,
   });
@@ -56,9 +63,62 @@ export function useIsEliteSubscriber() {
     queryKey: ["is-elite"],
     queryFn: async () => {
       if (!actor) return false;
-      return actor.isEliteSubscriber();
+      return actor.isEliteTierSubscriber();
     },
     enabled: !!actor && !isFetching,
+  });
+}
+
+export function useIsCallerApproved() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["is-approved"],
+    queryFn: async () => {
+      if (!actor) return false;
+      return actor.isCallerApproved();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useIsCallerAdmin() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["is-admin"],
+    queryFn: async () => {
+      if (!actor) return false;
+      return actor.isCallerAdmin();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useListApprovals() {
+  const { actor, isFetching } = useActor();
+  return useQuery<UserApprovalInfo[]>({
+    queryKey: ["list-approvals"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.listApprovals();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSetApproval() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      user,
+      status,
+    }: { user: Principal; status: ApprovalStatus }) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.setApproval(user, status);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["list-approvals"] });
+    },
   });
 }
 
@@ -103,6 +163,49 @@ export function useUpdateWatchlistTag() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+    },
+  });
+}
+
+export function useOffenders() {
+  const { actor, isFetching } = useActor();
+  return useQuery<OffenderRecord[]>({
+    queryKey: ["offenders"],
+    queryFn: async () => {
+      if (!actor) return [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (actor as any).getOffenders();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useAddOffender() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (record: OffenderRecord) => {
+      if (!actor) throw new Error("Not connected");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (actor as any).addOffender(record);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["offenders"] });
+    },
+  });
+}
+
+export function useRemoveOffender() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: bigint) => {
+      if (!actor) throw new Error("Not connected");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (actor as any).removeOffender(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["offenders"] });
     },
   });
 }

@@ -1,18 +1,10 @@
-import {
-  Crown,
-  HelpCircle,
-  Plus,
-  Trash2,
-  UserCheck,
-  UserX,
-} from "lucide-react";
+import { HelpCircle, Plus, Trash2, UserCheck, UserX } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Variant_avoid_safe_unknown } from "../backend.d";
 import {
   useAddWatchlistEntry,
-  useIsEliteSubscriber,
   useRemoveWatchlistEntry,
   useWatchlist,
 } from "../hooks/useQueries";
@@ -69,7 +61,6 @@ const STATIC_WATCHLIST = [
 ];
 
 export default function WatchlistTab() {
-  const { data: isElite } = useIsEliteSubscriber();
   const { data: watchlistData } = useWatchlist();
   const addEntry = useAddWatchlistEntry();
   const removeEntry = useRemoveWatchlistEntry();
@@ -85,33 +76,6 @@ export default function WatchlistTab() {
     watchlistData && watchlistData.length > 0
       ? watchlistData
       : STATIC_WATCHLIST;
-
-  if (isElite === false) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div
-          className="card-blackgrid max-w-md border-[#C9A95C44]"
-          data-ocid="watchlist.upgrade.card"
-        >
-          <Crown className="w-12 h-12 text-[#C9A95C] mx-auto mb-4" />
-          <h2 className="text-xl font-bold tracking-widest uppercase text-[#EDEDED] mb-2">
-            Elite Access Required
-          </h2>
-          <p className="text-sm text-[#8A8A8A] tracking-wide leading-relaxed mb-6">
-            The Watchlist Intelligence System is available exclusively to Elite
-            and Black tier operatives.
-          </p>
-          <button
-            type="button"
-            data-ocid="watchlist.upgrade.primary_button"
-            className="w-full py-3 bg-[#C9A95C] text-[#0A0A0A] text-xs tracking-widest uppercase font-bold hover:bg-[#E8C878] transition-all"
-          >
-            UPGRADE TO ELITE — $79/MO
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const handleAdd = async () => {
     if (!name.trim()) return;
