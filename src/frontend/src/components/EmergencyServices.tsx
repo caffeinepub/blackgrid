@@ -1,6 +1,11 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 
+type PendingAction = {
+  label: string;
+  href: string;
+};
+
 export default function EmergencyServices() {
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
@@ -8,6 +13,9 @@ export default function EmergencyServices() {
   );
   const [locating, setLocating] = useState(false);
   const [locError, setLocError] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -26,6 +34,22 @@ export default function EmergencyServices() {
       { timeout: 8000 },
     );
   }, [isOpen]);
+
+  function handleActionClick(e: React.MouseEvent, label: string, href: string) {
+    e.preventDefault();
+    setPendingAction({ label, href });
+  }
+
+  function handleConfirm() {
+    if (!pendingAction) return;
+    window.location.href = pendingAction.href;
+    setPendingAction(null);
+    setIsOpen(false);
+  }
+
+  function handleCancelConfirm() {
+    setPendingAction(null);
+  }
 
   return (
     <>
@@ -55,10 +79,14 @@ export default function EmergencyServices() {
             className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
             style={{ backgroundColor: "rgba(0,0,0,0.92)" }}
             onClick={(e) => {
-              if (e.target === e.currentTarget) setIsOpen(false);
+              if (e.target === e.currentTarget && !pendingAction)
+                setIsOpen(false);
             }}
             onKeyDown={(e) => {
-              if (e.key === "Escape") setIsOpen(false);
+              if (e.key === "Escape") {
+                if (pendingAction) setPendingAction(null);
+                else setIsOpen(false);
+              }
             }}
             data-ocid="sos.modal"
           >
@@ -120,7 +148,7 @@ export default function EmergencyServices() {
                     data-ocid="sos.call_911.primary_button"
                     className="flex items-center gap-4 w-full p-4 text-white transition-all hover:opacity-90"
                     style={{ backgroundColor: "#8B0000" }}
-                    onClick={() => setIsOpen(false)}
+                    onClick={(e) => handleActionClick(e, "CALL 911", "tel:911")}
                   >
                     <span className="text-2xl flex-shrink-0">🚨</span>
                     <div className="flex-1 text-left">
@@ -142,10 +170,14 @@ export default function EmergencyServices() {
                     href="tel:4155530123"
                     data-ocid="sos.sf_nonemergency.button"
                     className="flex items-center gap-4 w-full p-4 transition-all hover:bg-[#1A1A1A]"
-                    style={{
-                      border: "1px solid rgba(201,169,92,0.3)",
-                    }}
-                    onClick={() => setIsOpen(false)}
+                    style={{ border: "1px solid rgba(201,169,92,0.3)" }}
+                    onClick={(e) =>
+                      handleActionClick(
+                        e,
+                        "SF NON-EMERGENCY (415-553-0123)",
+                        "tel:4155530123",
+                      )
+                    }
                   >
                     <span className="text-2xl flex-shrink-0">📞</span>
                     <div className="flex-1 text-left">
@@ -167,10 +199,14 @@ export default function EmergencyServices() {
                     href="sms:741741?body=HOME"
                     data-ocid="sos.crisis_text.button"
                     className="flex items-center gap-4 w-full p-4 transition-all hover:bg-[#1A1A1A]"
-                    style={{
-                      border: "1px solid rgba(201,169,92,0.3)",
-                    }}
-                    onClick={() => setIsOpen(false)}
+                    style={{ border: "1px solid rgba(201,169,92,0.3)" }}
+                    onClick={(e) =>
+                      handleActionClick(
+                        e,
+                        "CRISIS TEXT LINE (Text HOME to 741741)",
+                        "sms:741741?body=HOME",
+                      )
+                    }
                   >
                     <span className="text-2xl flex-shrink-0">💬</span>
                     <div className="flex-1 text-left">
@@ -192,10 +228,14 @@ export default function EmergencyServices() {
                     href="mailto:acgagc7@gmail.com?subject=EMERGENCY - BLACKGRID Security Request"
                     data-ocid="sos.contact_admin.button"
                     className="flex items-center gap-4 w-full p-4 transition-all hover:bg-[#1A1A1A]"
-                    style={{
-                      border: "1px solid rgba(201,169,92,0.3)",
-                    }}
-                    onClick={() => setIsOpen(false)}
+                    style={{ border: "1px solid rgba(201,169,92,0.3)" }}
+                    onClick={(e) =>
+                      handleActionClick(
+                        e,
+                        "CONTACT ADMIN (BLACKGRID Security)",
+                        "mailto:acgagc7@gmail.com?subject=EMERGENCY - BLACKGRID Security Request",
+                      )
+                    }
                   >
                     <span className="text-2xl flex-shrink-0">📧</span>
                     <div className="flex-1 text-left">
@@ -255,6 +295,95 @@ export default function EmergencyServices() {
                 </p>
               </div>
             </motion.div>
+
+            {/* Confirmation Dialog */}
+            <AnimatePresence>
+              {pendingAction && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute inset-0 flex items-center justify-center px-4"
+                  style={{ backgroundColor: "rgba(0,0,0,0.85)" }}
+                  data-ocid="sos.dialog"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.92, y: 8 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.92, y: 8 }}
+                    transition={{ duration: 0.15 }}
+                    className="w-full max-w-xs p-6"
+                    style={{
+                      backgroundColor: "#0A0A0A",
+                      border: "1px solid rgba(201,169,92,0.7)",
+                      boxShadow:
+                        "0 0 40px rgba(201,169,92,0.15), 0 0 80px rgba(204,0,0,0.15)",
+                    }}
+                  >
+                    {/* Icon */}
+                    <div className="flex justify-center mb-4">
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
+                        style={{
+                          backgroundColor: "rgba(204,0,0,0.15)",
+                          border: "1px solid rgba(204,0,0,0.4)",
+                        }}
+                      >
+                        📡
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <h3
+                      className="text-center text-sm font-bold uppercase tracking-widest mb-2"
+                      style={{ color: "#C9A95C" }}
+                    >
+                      CONFIRM ACTION
+                    </h3>
+
+                    {/* Message */}
+                    <p className="text-center text-white text-sm font-semibold mb-1 tracking-wide">
+                      Are you sure you want to make this call?
+                    </p>
+                    <p
+                      className="text-center text-[10px] tracking-widest uppercase mb-6"
+                      style={{ color: "rgba(201,169,92,0.6)" }}
+                    >
+                      {pendingAction.label}
+                    </p>
+
+                    {/* Buttons */}
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={handleCancelConfirm}
+                        data-ocid="sos.cancel_button"
+                        className="flex-1 py-3 text-xs font-bold uppercase tracking-widest transition-all hover:bg-[#1A1A1A]"
+                        style={{
+                          border: "1px solid rgba(255,255,255,0.15)",
+                          color: "#6A6A6A",
+                        }}
+                      >
+                        CANCEL
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleConfirm}
+                        data-ocid="sos.confirm_button"
+                        className="flex-1 py-3 text-xs font-bold uppercase tracking-widest transition-all hover:opacity-90"
+                        style={{
+                          backgroundColor: "#C9A95C",
+                          color: "#0A0A0A",
+                        }}
+                      >
+                        CONFIRM
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
