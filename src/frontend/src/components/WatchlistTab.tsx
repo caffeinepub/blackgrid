@@ -33,33 +33,6 @@ const TAG_CONFIG = {
   },
 };
 
-const STATIC_WATCHLIST = [
-  {
-    id: BigInt(1),
-    targetName: "Marcus Chen",
-    tag: Variant_avoid_safe_unknown.safe,
-    notes: "Business associate. Met at tech summit. Verified identity.",
-    addedAt: BigInt(Date.now()),
-    interactionHistory: [] as Array<[bigint, string]>,
-  },
-  {
-    id: BigInt(2),
-    targetName: "Unknown Male #4471",
-    tag: Variant_avoid_safe_unknown.avoid,
-    notes: "Followed me from Union Square. Aggressive behavior documented.",
-    addedAt: BigInt(Date.now() - 86400000),
-    interactionHistory: [] as Array<[bigint, string]>,
-  },
-  {
-    id: BigInt(3),
-    targetName: "Sarah Vance",
-    tag: Variant_avoid_safe_unknown.unknown_,
-    notes: "Met at networking event. Unverified identity.",
-    addedAt: BigInt(Date.now() - 172800000),
-    interactionHistory: [] as Array<[bigint, string]>,
-  },
-];
-
 export default function WatchlistTab() {
   const { data: watchlistData } = useWatchlist();
   const addEntry = useAddWatchlistEntry();
@@ -72,10 +45,7 @@ export default function WatchlistTab() {
   const [notes, setNotes] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
-  const watchlist =
-    watchlistData && watchlistData.length > 0
-      ? watchlistData
-      : STATIC_WATCHLIST;
+  const watchlist = watchlistData ?? [];
 
   const handleAdd = async () => {
     if (!name.trim()) return;

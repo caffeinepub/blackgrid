@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ApprovalStatus } from "./backend.d";
 import AdminPanel from "./components/AdminPanel";
 import BodyguardDirectory from "./components/BodyguardDirectory";
@@ -21,6 +21,9 @@ import {
   useIsCallerApproved,
   useListApprovals,
 } from "./hooks/useQueries";
+
+const ADMIN_PASSCODE = "BLACKGRID_ELITE_2024";
+const STORAGE_KEY = "bg_admin_override";
 
 type Tab =
   | "dashboard"
@@ -55,6 +58,152 @@ const NAV_TABS: { id: Tab; label: string }[] = [
   { id: "watchlist", label: "WATCHLIST" },
   { id: "subscription", label: "SUBSCRIPTION" },
 ];
+
+function AdminPasscodeModal({
+  isOpen,
+  onClose,
+  overrideActive,
+  onGrant,
+  onRevoke,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  overrideActive: boolean;
+  onGrant: (code: string) => boolean;
+  onRevoke: () => void;
+}) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+
+  const handleGrant = () => {
+    const success = onGrant(code);
+    if (success) {
+      setCode("");
+      setError("");
+      onClose();
+    } else {
+      setError("INVALID CODE");
+    }
+  };
+
+  const handleRevoke = () => {
+    onRevoke();
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      style={{ backgroundColor: "rgba(0,0,0,0.85)" }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
+      }}
+      data-ocid="admin_modal.modal"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
+        className="relative w-full max-w-sm mx-4 p-8"
+        style={{
+          backgroundColor: "#0A0A0A",
+          border: "1px solid rgba(201,169,92,0.5)",
+          boxShadow: "0 0 40px rgba(201,169,92,0.15)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          data-ocid="admin_modal.close_button"
+          className="absolute top-4 right-4 text-[#6A6A6A] hover:text-[#C9A95C] transition-colors text-lg leading-none"
+        >
+          ✕
+        </button>
+
+        <div className="mb-6">
+          <p className="text-[9px] tracking-[0.4em] text-[#6A6A6A] uppercase mb-1">
+            BLACKGRID
+          </p>
+          <h2
+            className="text-[#C9A95C] text-xl font-bold uppercase"
+            style={{ letterSpacing: "0.2em" }}
+          >
+            ADMIN ACCESS
+          </h2>
+        </div>
+
+        {overrideActive && (
+          <div className="mb-5 flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#2ECC71] animate-pulse" />
+            <span className="text-[10px] tracking-[0.25em] uppercase text-[#2ECC71] font-semibold">
+              ADMIN OVERRIDE ACTIVE
+            </span>
+          </div>
+        )}
+
+        <div className="mb-4">
+          <label
+            htmlFor="admin-passcode-input"
+            className="block text-[9px] tracking-[0.3em] uppercase text-[#6A6A6A] mb-2"
+          >
+            ACCESS CODE
+          </label>
+          <input
+            id="admin-passcode-input"
+            type="password"
+            value={code}
+            onChange={(e) => {
+              setCode(e.target.value);
+              setError("");
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleGrant();
+            }}
+            placeholder="Enter passcode"
+            data-ocid="admin_modal.input"
+            className="w-full px-4 py-3 bg-transparent text-[#EDEDED] text-sm placeholder-[#3A3A3A] outline-none"
+            style={{ border: "1px solid rgba(201,169,92,0.4)" }}
+          />
+          {error && (
+            <p
+              className="mt-2 text-[10px] tracking-widest uppercase text-[#CC3333]"
+              data-ocid="admin_modal.error_state"
+            >
+              {error}
+            </p>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGrant}
+          data-ocid="admin_modal.submit_button"
+          className="w-full py-3 bg-[#C9A95C] text-[#0A0A0A] text-[10px] tracking-[0.25em] uppercase font-bold hover:bg-[#E8C878] transition-all mb-3"
+        >
+          GRANT ACCESS
+        </button>
+
+        {overrideActive && (
+          <button
+            type="button"
+            onClick={handleRevoke}
+            data-ocid="admin_modal.delete_button"
+            className="w-full py-2 border text-[10px] tracking-[0.2em] uppercase font-bold transition-all"
+            style={{ borderColor: "rgba(122,0,0,0.6)", color: "#CC4444" }}
+          >
+            REVOKE OVERRIDE
+          </button>
+        )}
+      </motion.div>
+    </div>
+  );
+}
 
 function ElitePaywall({ onUpgrade }: { onUpgrade: () => void }) {
   return (
@@ -129,6 +278,7 @@ function Navbar({
   pendingCount,
   onLogin,
   isPaid,
+  onLogoClick,
 }: {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
@@ -136,6 +286,7 @@ function Navbar({
   pendingCount: number;
   onLogin?: () => void;
   isPaid?: boolean;
+  onLogoClick?: () => void;
 }) {
   const { identity, login, clear } = useInternetIdentity();
   const isAuthenticated = !!identity && !identity.getPrincipal().isAnonymous();
@@ -150,12 +301,15 @@ function Navbar({
       }}
     >
       <div className="flex items-center gap-2.5 flex-shrink-0">
-        <span
-          className="text-base font-bold uppercase text-[#C9A95C]"
+        <button
+          type="button"
+          className="text-base font-bold uppercase text-[#C9A95C] cursor-pointer select-none bg-transparent border-none p-0"
           style={{ letterSpacing: "0.25em" }}
+          onClick={onLogoClick}
+          data-ocid="nav.logo.button"
         >
           BLACKGRID
-        </span>
+        </button>
       </div>
 
       {isAuthenticated && showNav && (
@@ -293,14 +447,20 @@ function MobileNav({
 
 function AccessGate({
   children,
+  overrideAdmin,
 }: {
   children: (isPaid: boolean, isAdmin: boolean) => React.ReactNode;
+  overrideAdmin?: boolean;
 }) {
   const { data: isAdmin, isLoading: adminLoading } = useIsCallerAdmin();
   const { data: isApproved, isLoading: approvedLoading } =
     useIsCallerApproved();
 
   const isLoading = approvedLoading || adminLoading;
+
+  if (overrideAdmin) {
+    return <>{children(true, true)}</>;
+  }
 
   if (isLoading) {
     return (
@@ -359,6 +519,7 @@ function AuthenticatedApp({
   setPendingCount,
   isPaid,
   isAdmin,
+  onLogoClick,
 }: {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
@@ -366,10 +527,10 @@ function AuthenticatedApp({
   setPendingCount: (n: number) => void;
   isPaid: boolean;
   isAdmin: boolean;
+  onLogoClick?: () => void;
 }) {
   const handleTabChange = (tab: string) => {
     const t = tab as Tab;
-    // If free user tries a locked tab, redirect to subscription
     if (!isPaid && LOCKED_TABS.includes(t)) {
       setActiveTab("subscription");
       return;
@@ -387,6 +548,7 @@ function AuthenticatedApp({
         showNav={true}
         pendingCount={pendingCount}
         isPaid={isPaid}
+        onLogoClick={onLogoClick}
       />
       <PendingNotificationTracker onPendingCount={setPendingCount} />
       <div className="pt-14 pb-16 md:pb-0">
@@ -550,6 +712,41 @@ function AuthenticatedApp({
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
   const [pendingCount, setPendingCount] = useState(0);
+  const [localAdminOverride, setLocalAdminOverride] = useState(
+    () => localStorage.getItem(STORAGE_KEY) === ADMIN_PASSCODE,
+  );
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLogoClick = () => {
+    clickCountRef.current += 1;
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 3000);
+    if (clickCountRef.current >= 5) {
+      clickCountRef.current = 0;
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+      setModalOpen(true);
+    }
+  };
+
+  const handleGrant = (code: string): boolean => {
+    if (code === ADMIN_PASSCODE) {
+      localStorage.setItem(STORAGE_KEY, ADMIN_PASSCODE);
+      setLocalAdminOverride(true);
+      return true;
+    }
+    return false;
+  };
+
+  const handleRevoke = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setLocalAdminOverride(false);
+  };
+
   const { identity, login } = useInternetIdentity();
   const isAuthenticated = !!identity && !identity.getPrincipal().isAnonymous();
 
@@ -589,6 +786,7 @@ export default function App() {
               onTabChange={setActiveTab}
               showNav={false}
               pendingCount={0}
+              onLogoClick={handleLogoClick}
             />
             <main className="pt-14">
               <LandingPage
@@ -605,7 +803,7 @@ export default function App() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <AccessGate>
+            <AccessGate overrideAdmin={localAdminOverride}>
               {(isPaid, isAdmin) => (
                 <AuthenticatedApp
                   activeTab={activeTab}
@@ -614,12 +812,26 @@ export default function App() {
                   setPendingCount={setPendingCount}
                   isPaid={isPaid}
                   isAdmin={isAdmin}
+                  onLogoClick={handleLogoClick}
                 />
               )}
             </AccessGate>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {modalOpen && (
+          <AdminPasscodeModal
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            overrideActive={localAdminOverride}
+            onGrant={handleGrant}
+            onRevoke={handleRevoke}
+          />
+        )}
+      </AnimatePresence>
+
       <Toaster />
     </div>
   );
