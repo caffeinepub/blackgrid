@@ -81,7 +81,7 @@ export default function PaymentSuccess() {
           FULL ACCESS UNLOCKED
         </h1>
         <p className="text-[#8A8A8A] text-sm mb-2">
-          Your Elite membership is now active — $149/month.
+          Your Elite membership is now active — $100.00/month.
         </p>
         <p className="text-[#5A5A5A] text-xs tracking-wide mb-10">
           All BLACKGRID features are now available: Dashboard, Shield, Registry,

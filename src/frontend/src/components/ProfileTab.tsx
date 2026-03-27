@@ -1,4 +1,4 @@
-import { Loader2, Shield, Star, User } from "lucide-react";
+import { Loader2, QrCode, Shield, Star, User, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -7,6 +7,8 @@ import {
   Variant_verified_none_elite_basic,
 } from "../backend.d";
 import { useProfile, useSaveProfile } from "../hooks/useQueries";
+import { useQRScanner } from "../qr-code/useQRScanner";
+import AdminIdentityBadge from "./AdminIdentityBadge";
 
 const TIER_LABELS: Record<Variant_free_elite_black, string> = {
   [Variant_free_elite_black.free]: "FREE MEMBER",
@@ -21,7 +23,205 @@ const VERIFICATION_LABELS: Record<Variant_verified_none_elite_basic, string> = {
   [Variant_verified_none_elite_basic.elite]: "ELITE VERIFIED",
 };
 
-export default function ProfileTab() {
+function QRScannerSection() {
+  const {
+    qrResults,
+    isScanning,
+    isSupported,
+    error,
+    isLoading,
+    canStartScanning,
+    startScanning,
+    stopScanning,
+    clearResults,
+    videoRef,
+    canvasRef,
+  } = useQRScanner({
+    facingMode: "environment",
+    scanInterval: 150,
+    maxResults: 10,
+  });
+
+  if (isSupported === false) {
+    return (
+      <div
+        className="card-blackgrid text-center py-8"
+        data-ocid="profile.qr_scanner.panel"
+        style={{ border: "1px solid rgba(201,169,92,0.2)" }}
+      >
+        <QrCode className="w-8 h-8 text-[#C9A95C]/40 mx-auto mb-3" />
+        <p className="text-[10px] tracking-widest uppercase text-[#4A4A4A]">
+          Camera not supported on this device
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4" data-ocid="profile.qr_scanner.panel">
+      <div className="text-[10px] tracking-widest uppercase text-[#C9A95C] border-b border-[#1A1A1A] pb-3 flex items-center gap-2">
+        <QrCode className="w-3.5 h-3.5" />
+        QR IDENTITY SCANNER
+      </div>
+
+      {/* Video preview */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background: "#050505",
+          border: "1px solid rgba(201,169,92,0.15)",
+          display: isScanning ? "block" : "none",
+        }}
+      >
+        <video
+          ref={videoRef}
+          style={{
+            width: "100%",
+            maxHeight: "300px",
+            display: "block",
+            objectFit: "cover",
+          }}
+          playsInline
+          muted
+        />
+        {/* Scan overlay */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#C9A95C]/80" />
+          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#C9A95C]/80" />
+          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#C9A95C]/80" />
+          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#C9A95C]/80" />
+          <div
+            className="absolute left-0 right-0 h-px animate-pulse"
+            style={{
+              top: "50%",
+              background:
+                "linear-gradient(90deg, transparent, #C9A95C, transparent)",
+            }}
+          />
+        </div>
+        <div className="absolute bottom-2 left-0 right-0 flex justify-center">
+          <span className="text-[8px] tracking-[0.3em] uppercase text-[#C9A95C]/80 bg-black/60 px-3 py-1">
+            {isScanning ? "SCANNING..." : "INITIALIZING"}
+          </span>
+        </div>
+      </div>
+
+      <canvas ref={canvasRef} style={{ display: "none" }} />
+
+      {/* Error */}
+      {error && (
+        <div
+          className="px-4 py-3 text-[9px] tracking-wider uppercase"
+          style={{
+            background: "rgba(122,0,0,0.15)",
+            border: "1px solid rgba(122,0,0,0.4)",
+            color: "#E07070",
+          }}
+          data-ocid="profile.qr_scanner.error_state"
+        >
+          {error.message}
+        </div>
+      )}
+
+      {/* Controls */}
+      <div className="flex items-center gap-3">
+        {!isScanning ? (
+          <button
+            type="button"
+            onClick={startScanning}
+            disabled={!canStartScanning || isLoading}
+            data-ocid="profile.qr_scanner.primary_button"
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#C9A95C] text-[#0A0A0A] text-[9px] tracking-[0.3em] uppercase font-bold hover:bg-[#E8C878] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <QrCode className="w-3 h-3" />
+            )}
+            {isLoading ? "INITIALIZING" : "START SCANNING"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={stopScanning}
+            disabled={isLoading}
+            data-ocid="profile.qr_scanner.secondary_button"
+            className="flex items-center gap-2 px-5 py-2.5 text-[9px] tracking-[0.3em] uppercase font-bold transition-all"
+            style={{
+              border: "1px solid rgba(201,169,92,0.4)",
+              color: "#C9A95C",
+              background: "rgba(201,169,92,0.06)",
+            }}
+          >
+            <X className="w-3 h-3" />
+            STOP SCANNING
+          </button>
+        )}
+        {qrResults.length > 0 && (
+          <button
+            type="button"
+            onClick={clearResults}
+            data-ocid="profile.qr_scanner.delete_button"
+            className="px-4 py-2.5 text-[9px] tracking-[0.3em] uppercase text-[#8A8A8A] hover:text-[#CC3333] transition-all"
+          >
+            CLEAR
+          </button>
+        )}
+      </div>
+
+      {/* Results */}
+      {qrResults.length > 0 && (
+        <div className="space-y-2" data-ocid="profile.qr_scanner.list">
+          <div className="text-[8px] tracking-[0.3em] uppercase text-[#8A8A8A]">
+            SCAN RESULTS — {qrResults.length} DETECTED
+          </div>
+          {qrResults.map((result, idx) => (
+            <div
+              key={result.timestamp}
+              data-ocid={`profile.qr_scanner.item.${idx + 1}`}
+              style={{
+                background: "rgba(201,169,92,0.04)",
+                border: "1px solid rgba(201,169,92,0.15)",
+              }}
+              className="px-4 py-3 space-y-1.5"
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className="text-[7px] tracking-[0.3em] uppercase font-bold px-1.5 py-0.5"
+                  style={{
+                    color: "#C9A95C",
+                    background: "rgba(201,169,92,0.1)",
+                  }}
+                >
+                  QR DECODED
+                </span>
+                <span className="text-[8px] text-[#4A4A4A] tracking-wider">
+                  {new Date(result.timestamp).toLocaleTimeString()}
+                </span>
+              </div>
+              <p className="text-xs text-[#EDEDED]/80 tracking-wide break-all font-mono">
+                {result.data}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!isScanning && qrResults.length === 0 && (
+        <div
+          className="text-center py-6"
+          data-ocid="profile.qr_scanner.empty_state"
+        >
+          <p className="text-[9px] tracking-widest uppercase text-[#3A3A3A]">
+            Tap START SCANNING to read a BLACKGRID identity QR code
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ProfileTab({ isAdmin }: { isAdmin?: boolean }) {
   const { data: profile, isLoading } = useProfile();
   const saveProfile = useSaveProfile();
 
@@ -55,6 +255,37 @@ export default function ProfileTab() {
 
   return (
     <div className="space-y-6">
+      {/* Admin banner */}
+      {isAdmin && (
+        <div
+          className="flex items-center gap-3 px-5 py-3"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(201,169,92,0.12), rgba(201,169,92,0.04))",
+            border: "1px solid rgba(201,169,92,0.5)",
+            boxShadow: "0 0 20px rgba(201,169,92,0.08)",
+          }}
+          data-ocid="profile.admin.panel"
+        >
+          <div className="w-2 h-2 rounded-full bg-[#2ECC71] animate-pulse flex-shrink-0" />
+          <span
+            className="text-[10px] font-bold tracking-[0.35em] uppercase"
+            style={{ color: "#C9A95C" }}
+          >
+            ADMINISTRATOR — FULL ACCESS GRANTED
+          </span>
+          <div
+            className="ml-auto text-[8px] tracking-[0.2em] uppercase px-2 py-0.5 font-bold"
+            style={{
+              color: "#0A0A0A",
+              background: "#C9A95C",
+            }}
+          >
+            BLACK TIER · ELITE
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start justify-between pb-4 border-b border-[#1A1A1A]">
         <div>
           <div className="text-[10px] tracking-widest uppercase text-[#8A8A8A] mb-1">
@@ -74,6 +305,13 @@ export default function ProfileTab() {
           <User className="w-6 h-6 text-[#C9A95C]" />
         </div>
       </div>
+
+      {/* Admin identity badge */}
+      {isAdmin && (
+        <div className="card-blackgrid">
+          <AdminIdentityBadge />
+        </div>
+      )}
 
       {isLoading ? (
         <div
@@ -248,6 +486,11 @@ export default function ProfileTab() {
           </div>
         </div>
       )}
+
+      {/* QR Scanner — available to all paid users */}
+      <div className="card-blackgrid">
+        <QRScannerSection />
+      </div>
     </div>
   );
 }

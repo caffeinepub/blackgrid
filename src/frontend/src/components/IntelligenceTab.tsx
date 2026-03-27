@@ -101,7 +101,7 @@ export default function IntelligenceTab({
           <Zap className="w-4 h-4 text-[#C9A95C] flex-shrink-0" />
           <p className="text-[9px] tracking-[0.18em] uppercase text-[#C9A95C] leading-relaxed">
             FREE INTELLIGENCE ACCESS — UPGRADE TO FULL BLACKGRID MEMBERSHIP:{" "}
-            <span className="font-bold">$149 VIA CHIME $Alise-Grey</span>
+            <span className="font-bold">$100.00 VIA CHIME $Alise-Grey</span>
           </p>
         </div>
       )}

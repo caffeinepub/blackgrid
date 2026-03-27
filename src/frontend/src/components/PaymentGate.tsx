@@ -38,7 +38,7 @@ export default function PaymentGate() {
           productDescription:
             "Full access to all BLACKGRID features — Dashboard, Shield, Registry, Watchlist, Intelligence, Profile, Network",
           currency: "usd",
-          priceInCents: BigInt(14900),
+          priceInCents: BigInt(10000),
           quantity: BigInt(1),
         },
       ]);
@@ -125,7 +125,7 @@ export default function PaymentGate() {
               {[
                 {
                   step: "01",
-                  text: "Send $149/month via Chime",
+                  text: "Send $100.00/month via Chime",
                   detail: "Chime: $Alise-Grey  ·  acgagc7@gmail.com",
                 },
                 {
@@ -220,7 +220,7 @@ export default function PaymentGate() {
                     PREPARING CHECKOUT...
                   </>
                 ) : (
-                  "PAY $149 BY CARD"
+                  "PAY $100.00 BY CARD"
                 )}
               </button>
               <p className="text-[8px] text-center text-[#4A4A4A] tracking-wide">

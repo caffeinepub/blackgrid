@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { ApprovalStatus } from "./backend.d";
 import AdminPanel from "./components/AdminPanel";
+import BodyguardDirectory from "./components/BodyguardDirectory";
 import DashboardTab from "./components/DashboardTab";
 import IntelligenceTab from "./components/IntelligenceTab";
 import LandingPage from "./components/LandingPage";
@@ -29,7 +30,8 @@ type Tab =
   | "registry"
   | "subscription"
   | "profile"
-  | "network";
+  | "network"
+  | "guards";
 
 const _FREE_TABS: Tab[] = ["intelligence", "subscription"];
 const LOCKED_TABS: Tab[] = [
@@ -38,6 +40,7 @@ const LOCKED_TABS: Tab[] = [
   "profile",
   "registry",
   "network",
+  "guards",
   "watchlist",
 ];
 
@@ -48,6 +51,7 @@ const NAV_TABS: { id: Tab; label: string }[] = [
   { id: "profile", label: "PROFILE" },
   { id: "registry", label: "REGISTRY" },
   { id: "network", label: "NETWORK" },
+  { id: "guards", label: "GUARDS" },
   { id: "watchlist", label: "WATCHLIST" },
   { id: "subscription", label: "SUBSCRIPTION" },
 ];
@@ -94,6 +98,7 @@ function ElitePaywall({ onUpgrade }: { onUpgrade: () => void }) {
             "Route Defense & Safe Passages",
             "Offender Registry Access",
             "Watchlist & Network Directory",
+            "Guard Network — Hire Bodyguards",
           ].map((feature) => (
             <li key={feature} className="flex items-center gap-2">
               <span className="text-[#C9A95C] text-xs">▸</span>
@@ -110,7 +115,7 @@ function ElitePaywall({ onUpgrade }: { onUpgrade: () => void }) {
           data-ocid="paywall.primary_button"
           className="w-full py-3 bg-[#C9A95C] text-[#0A0A0A] text-xs tracking-[0.25em] uppercase font-bold hover:bg-[#E8C878] transition-all"
         >
-          UPGRADE NOW — $149/MO
+          UPGRADE NOW — $100.00/MO
         </button>
       </div>
     </motion.div>
@@ -289,7 +294,7 @@ function MobileNav({
 function AccessGate({
   children,
 }: {
-  children: (isPaid: boolean) => React.ReactNode;
+  children: (isPaid: boolean, isAdmin: boolean) => React.ReactNode;
 }) {
   const { data: isAdmin, isLoading: adminLoading } = useIsCallerAdmin();
   const { data: isApproved, isLoading: approvedLoading } =
@@ -322,8 +327,9 @@ function AccessGate({
     );
   }
 
-  const isPaid = !!(isAdmin || isApproved);
-  return <>{children(isPaid)}</>;
+  const adminBool = !!isAdmin;
+  const isPaid = !!(adminBool || isApproved);
+  return <>{children(isPaid, adminBool)}</>;
 }
 
 function PendingNotificationTracker({
@@ -352,12 +358,14 @@ function AuthenticatedApp({
   pendingCount,
   setPendingCount,
   isPaid,
+  isAdmin,
 }: {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
   pendingCount: number;
   setPendingCount: (n: number) => void;
   isPaid: boolean;
+  isAdmin: boolean;
 }) {
   const handleTabChange = (tab: string) => {
     const t = tab as Tab;
@@ -477,7 +485,7 @@ function AuthenticatedApp({
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <ProfileTab />
+                  <ProfileTab isAdmin={isAdmin} />
                 </motion.div>
               ))}
             {activeTab === "network" &&
@@ -495,6 +503,23 @@ function AuthenticatedApp({
                   transition={{ duration: 0.2 }}
                 >
                   <NetworkTab />
+                </motion.div>
+              ))}
+            {activeTab === "guards" &&
+              (isTabLocked("guards") ? (
+                <ElitePaywall
+                  key="paywall-guards"
+                  onUpgrade={() => setActiveTab("subscription")}
+                />
+              ) : (
+                <motion.div
+                  key="guards"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <BodyguardDirectory />
                 </motion.div>
               ))}
             {activeTab === "subscription" && (
@@ -581,13 +606,14 @@ export default function App() {
             transition={{ duration: 0.3 }}
           >
             <AccessGate>
-              {(isPaid) => (
+              {(isPaid, isAdmin) => (
                 <AuthenticatedApp
                   activeTab={activeTab}
                   setActiveTab={setActiveTab}
                   pendingCount={pendingCount}
                   setPendingCount={setPendingCount}
                   isPaid={isPaid}
+                  isAdmin={isAdmin}
                 />
               )}
             </AccessGate>

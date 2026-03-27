@@ -93,7 +93,7 @@ export default function SubscriptionPage() {
               </div>
             </div>
             <div className="ml-auto text-right">
-              <div className="text-3xl font-bold text-[#C9A95C]">$149</div>
+              <div className="text-3xl font-bold text-[#C9A95C]">$100.00</div>
               <div className="text-[10px] tracking-widest text-[#8A8A8A] uppercase">
                 /month
               </div>
@@ -184,7 +184,7 @@ export default function SubscriptionPage() {
                 {[
                   {
                     step: "01",
-                    title: "SEND $149/MONTH VIA CHIME",
+                    title: "SEND $100.00/MONTH VIA CHIME",
                     sub: "Chime tag: $Alise-Grey  ·  acgagc7@gmail.com",
                   },
                   {
