@@ -1,4 +1,12 @@
-import { Check, CreditCard, Loader2, Shield, Star, Zap } from "lucide-react";
+import {
+  Check,
+  CreditCard,
+  Loader2,
+  Shield,
+  Star,
+  Users,
+  Zap,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useActor } from "../hooks/useActor";
@@ -21,6 +29,7 @@ const ALL_FEATURES = [
   "Private security network access",
   "Discreet alert protocols",
   "Dedicated security coordinator",
+  "Bodyguard hiring (Black Tier required)",
 ];
 
 function PaymentBadges() {
@@ -61,6 +70,205 @@ function PaymentBadges() {
           PAYPAL
         </span>
       </div>
+    </div>
+  );
+}
+
+function BlackTierCard() {
+  const handleApply = () => {
+    const subject = encodeURIComponent("Black Tier Application");
+    const body = encodeURIComponent(
+      "I am interested in applying for Black Tier membership to access the BLACKGRID bodyguard hiring feature.\n\nName:\nLocation:\nNote: I understand this is an invite-only program at $500+ and requires 24–72 hours advance notice for assignments.",
+    );
+    window.location.href = `mailto:acgagc7@gmail.com?subject=${subject}&body=${body}`;
+  };
+
+  return (
+    <div
+      data-ocid="subscription.blacktier.card"
+      className="relative border border-[#7A0000] bg-[#0E0808] p-8 flex flex-col mt-6"
+      style={{
+        boxShadow:
+          "0 0 40px rgba(122,0,0,0.15), inset 0 0 60px rgba(122,0,0,0.05)",
+      }}
+    >
+      {/* Badge */}
+      <div className="absolute top-0 right-0 px-4 py-1.5 bg-[#7A0000] text-[#C9A95C] text-[8px] tracking-widest uppercase font-bold">
+        INVITE ONLY
+      </div>
+
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 border border-[#7A0000] flex items-center justify-center">
+            <Shield className="w-5 h-5 text-[#7A0000]" />
+          </div>
+          <div className="w-9 h-9 border border-[#C9A95C]/60 flex items-center justify-center">
+            <Users className="w-5 h-5 text-[#C9A95C]/60" />
+          </div>
+          <div className="w-9 h-9 border border-[#C9A95C]/40 flex items-center justify-center">
+            <Star className="w-5 h-5 text-[#C9A95C]/40" />
+          </div>
+        </div>
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <div className="text-[9px] tracking-widest uppercase text-[#7A0000]">
+              BLACKGRID ·
+            </div>
+            <span className="px-2 py-0.5 bg-[#7A0000] text-[#C9A95C] text-[7px] tracking-widest uppercase font-black">
+              BLACK TIER
+            </span>
+          </div>
+          <div className="text-2xl font-bold tracking-widest text-[#EDEDED]">
+            VANTA POWER TIER
+          </div>
+        </div>
+        <div className="ml-auto text-right">
+          <div className="text-3xl font-bold text-[#C9A95C]">
+            $500<span className="text-lg">+</span>
+          </div>
+          <div className="text-[10px] tracking-widest text-[#8A8A8A] uppercase">
+            invite only
+          </div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div
+        className="w-full h-px mb-6"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent, rgba(122,0,0,0.6), rgba(201,169,92,0.3), transparent)",
+        }}
+      />
+
+      {/* Separator notice */}
+      <div className="flex items-start gap-3 p-3 border border-[#C9A95C]/20 bg-[#0A0A0A] mb-6">
+        <Zap className="w-3.5 h-3.5 text-[#C9A95C] flex-shrink-0 mt-0.5" />
+        <p className="text-[9px] tracking-wide uppercase text-[#C9A95C]/80 leading-relaxed">
+          Black Tier is a{" "}
+          <span className="text-[#C9A95C] font-bold">separate add-on</span> from
+          the standard $100 Elite Membership. Elite Membership is required
+          first. Black Tier unlocks exclusive bodyguard hiring through the
+          GUARDS tab.
+        </p>
+      </div>
+
+      {/* What's included */}
+      <div className="mb-6">
+        <p className="text-[9px] tracking-[0.3em] uppercase text-[#7A0000] mb-3">
+          WHAT'S INCLUDED
+        </p>
+        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-1">
+          {[
+            "Access to GUARDS tab — bodyguard hiring",
+            "Vetted SF operatives on demand",
+            "Armed & unarmed options",
+            "Live operative map (real-time)",
+            "Hire bodyguards in any city via app",
+            "Blackgrid Vanta Ambassador status",
+            "Priority assignment for urgent needs",
+            "Direct admin line for emergencies",
+          ].map((feature) => (
+            <div key={feature} className="flex items-center gap-3 py-1.5">
+              <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center text-[#7A0000]">
+                <Check className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-xs tracking-wide text-[#EDEDED]/90">
+                {feature}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div
+        className="w-full h-px mb-6"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent, rgba(122,0,0,0.4), transparent)",
+        }}
+      />
+
+      {/* Important notices */}
+      <div className="space-y-3 mb-6">
+        <p className="text-[9px] tracking-[0.3em] uppercase text-[#C9A95C] mb-3">
+          OPERATIONAL REQUIREMENTS
+        </p>
+        {[
+          {
+            step: "01",
+            title: "24–72 HOURS ADVANCE NOTICE REQUIRED",
+            sub: "All standard assignments must be booked 24–72 hours in advance.",
+          },
+          {
+            step: "02",
+            title: "SAME-DAY EMERGENCIES — MESSAGE ADMIN",
+            sub: "For same-day needs, message acgagc7@gmail.com with full details. Await invoice confirmation.",
+          },
+          {
+            step: "03",
+            title: "DIAL 911 FOR LIFE-THREATENING EMERGENCIES",
+            sub: "For all immediate life-threatening situations, call 911 first.",
+          },
+          {
+            step: "04",
+            title: "INVITE + PAYMENT CONFIRMS MEMBERSHIP",
+            sub: "Once your invite is accepted and payment is confirmed by email, you become a Blackgrid Vanta Power Tier Member & Ambassador.",
+          },
+        ].map(({ step, title, sub }) => (
+          <div key={step} className="flex gap-4 items-start">
+            <span className="text-[10px] font-bold font-mono text-[#7A0000] mt-0.5 flex-shrink-0">
+              {step}
+            </span>
+            <div className="border-l border-[#2A2A2A] pl-3">
+              <p className="text-[9px] tracking-widest uppercase text-[#EDEDED]">
+                {title}
+              </p>
+              <p className="text-[8px] mt-0.5 text-[#6A6A6A] tracking-wide">
+                {sub}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Divider */}
+      <div
+        className="w-full h-px mb-6"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent, rgba(122,0,0,0.3), transparent)",
+        }}
+      />
+
+      {/* Pricing note */}
+      <div className="mb-5 p-3 border border-[#7A0000]/40 bg-[#0A0A0A]">
+        <p className="text-[8px] tracking-[0.3em] uppercase text-[#C9A95C]/60 mb-1">
+          PRICING
+        </p>
+        <p className="text-[9px] tracking-wide text-[#EDEDED]/70 leading-relaxed">
+          Pricing varies based on number of guards, duration, and armed vs.
+          unarmed status. A live price calculator is available inside the GUARDS
+          tab once Black Tier access is granted.
+        </p>
+      </div>
+
+      {/* CTA */}
+      <button
+        type="button"
+        data-ocid="subscription.blacktier.primary_button"
+        onClick={handleApply}
+        className="w-full py-3.5 bg-[#7A0000] text-[#C9A95C] text-[10px] tracking-[0.3em] uppercase font-bold hover:bg-[#9A0000] transition-all flex items-center justify-center gap-2"
+      >
+        <Shield className="w-3.5 h-3.5" />
+        APPLY FOR BLACK TIER
+      </button>
+
+      <p className="text-center text-[8px] tracking-widest uppercase text-[#4A4A4A] mt-3">
+        Invite-only · Applications reviewed by admin within 48h
+      </p>
     </div>
   );
 }
@@ -179,7 +387,13 @@ export default function SubscriptionPage() {
                 <div className="w-4 h-4 flex-shrink-0 flex items-center justify-center text-[#C9A95C]">
                   <Check className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-xs tracking-wide text-[#EDEDED]">
+                <span
+                  className={`text-xs tracking-wide ${
+                    feature.includes("Black Tier")
+                      ? "text-[#C9A95C]/70"
+                      : "text-[#EDEDED]"
+                  }`}
+                >
                   {feature}
                 </span>
               </div>
@@ -342,6 +556,9 @@ export default function SubscriptionPage() {
             </div>
           )}
         </div>
+
+        {/* Black Tier Card */}
+        <BlackTierCard />
 
         {/* Info bar */}
         <p className="text-center text-[8px] tracking-widest uppercase text-[#4A4A4A] mt-4">
