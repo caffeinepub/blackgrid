@@ -6,6 +6,48 @@ import { useActor } from "../hooks/useActor";
 import { useCreateCheckoutSession } from "../hooks/useCreateCheckoutSession";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 
+function PaymentBadges() {
+  return (
+    <div className="mt-3 mb-2">
+      <p className="text-[8px] tracking-[0.3em] uppercase text-[#6A6A6A] mb-2">
+        ACCEPTED PAYMENTS
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        <span
+          className="px-2 py-1 text-[8px] font-bold tracking-widest uppercase"
+          style={{ backgroundColor: "#1A1F71", color: "#fff" }}
+        >
+          VISA
+        </span>
+        <span
+          className="px-2 py-1 text-[8px] font-bold tracking-widest uppercase"
+          style={{ backgroundColor: "#CC2200", color: "#fff" }}
+        >
+          MASTERCARD
+        </span>
+        <span
+          className="px-2 py-1 text-[8px] font-bold tracking-widest uppercase"
+          style={{ backgroundColor: "#007BC1", color: "#fff" }}
+        >
+          AMEX
+        </span>
+        <span
+          className="px-2 py-1 text-[8px] font-bold tracking-widest uppercase"
+          style={{ backgroundColor: "#2A2A2A", color: "#C9A95C" }}
+        >
+          DEBIT
+        </span>
+        <span
+          className="px-2 py-1 text-[8px] font-bold tracking-widest uppercase"
+          style={{ backgroundColor: "#003087", color: "#fff" }}
+        >
+          PAYPAL
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function PaymentGate() {
   const { actor } = useActor();
   const { identity, clear } = useInternetIdentity();
@@ -201,18 +243,18 @@ export default function PaymentGate() {
               <div className="h-px flex-1 bg-[#2A2A2A]" />
             </div>
 
-            {/* Card payment section */}
+            {/* Card / PayPal payment section */}
             <div className="border border-[#C9A95C]/15 bg-[#0D0D0D] p-4 mb-4">
               <p className="text-[9px] tracking-[0.3em] uppercase text-[#C9A95C] mb-3 flex items-center gap-2">
                 <CreditCard className="w-3 h-3" />
-                PAY BY CREDIT CARD
+                PAY BY CARD OR PAYPAL
               </p>
               <button
                 type="button"
                 data-ocid="payment_gate.card.primary_button"
                 onClick={handleCardPayment}
                 disabled={cardPending}
-                className="w-full py-3.5 bg-[#C9A95C] text-[#0A0A0A] text-[10px] tracking-[0.3em] uppercase font-bold hover:bg-[#E8C878] transition-all disabled:opacity-50 flex items-center justify-center gap-2 mb-2"
+                className="w-full py-3.5 bg-[#C9A95C] text-[#0A0A0A] text-[10px] tracking-[0.3em] uppercase font-bold hover:bg-[#E8C878] transition-all disabled:opacity-50 flex items-center justify-center gap-2 mb-1"
               >
                 {cardPending ? (
                   <>
@@ -220,12 +262,10 @@ export default function PaymentGate() {
                     PREPARING CHECKOUT...
                   </>
                 ) : (
-                  "PAY $100.00 BY CARD"
+                  "PAY $100.00 — CARD OR PAYPAL"
                 )}
               </button>
-              <p className="text-[8px] text-center text-[#4A4A4A] tracking-wide">
-                Visa · Mastercard · Amex · Discover · All Major Cards
-              </p>
+              <PaymentBadges />
             </div>
 
             <button

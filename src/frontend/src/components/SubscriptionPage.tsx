@@ -1,7 +1,8 @@
-import { Check, CreditCard, Shield, Star, Zap } from "lucide-react";
+import { Check, CreditCard, Loader2, Shield, Star, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useActor } from "../hooks/useActor";
+import { useCreateCheckoutSession } from "../hooks/useCreateCheckoutSession";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useIsCallerApproved } from "../hooks/useQueries";
 
@@ -22,6 +23,48 @@ const ALL_FEATURES = [
   "Dedicated security coordinator",
 ];
 
+function PaymentBadges() {
+  return (
+    <div className="mt-3 mb-1">
+      <p className="text-[8px] tracking-[0.3em] uppercase text-[#6A6A6A] mb-2">
+        ACCEPTED PAYMENTS
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        <span
+          className="px-2 py-1 text-[8px] font-bold tracking-widest uppercase"
+          style={{ backgroundColor: "#1A1F71", color: "#fff" }}
+        >
+          VISA
+        </span>
+        <span
+          className="px-2 py-1 text-[8px] font-bold tracking-widest uppercase"
+          style={{ backgroundColor: "#CC2200", color: "#fff" }}
+        >
+          MASTERCARD
+        </span>
+        <span
+          className="px-2 py-1 text-[8px] font-bold tracking-widest uppercase"
+          style={{ backgroundColor: "#007BC1", color: "#fff" }}
+        >
+          AMEX
+        </span>
+        <span
+          className="px-2 py-1 text-[8px] font-bold tracking-widest uppercase"
+          style={{ backgroundColor: "#2A2A2A", color: "#C9A95C" }}
+        >
+          DEBIT
+        </span>
+        <span
+          className="px-2 py-1 text-[8px] font-bold tracking-widest uppercase"
+          style={{ backgroundColor: "#003087", color: "#fff" }}
+        >
+          PAYPAL
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function SubscriptionPage() {
   const { actor } = useActor();
   const { identity } = useInternetIdentity();
@@ -29,6 +72,8 @@ export default function SubscriptionPage() {
     useIsCallerApproved();
   const [requested, setRequested] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { mutateAsync: createCheckoutSession, isPending: cardPending } =
+    useCreateCheckoutSession();
 
   const principalId = identity?.getPrincipal().toText() ?? "";
 
@@ -43,6 +88,24 @@ export default function SubscriptionPage() {
       toast.error("Failed to submit request.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCardPayment = async () => {
+    try {
+      const session = await createCheckoutSession([
+        {
+          productName: "BLACKGRID Elite Membership",
+          productDescription:
+            "Full access to all BLACKGRID features — Dashboard, Shield, Registry, Watchlist, Intelligence, Profile, Network",
+          currency: "usd",
+          priceInCents: BigInt(10000),
+          quantity: BigInt(1),
+        },
+      ]);
+      window.location.href = session.url;
+    } catch {
+      toast.error("Card payment unavailable. Try Chime or contact admin.");
     }
   };
 
@@ -169,12 +232,13 @@ export default function SubscriptionPage() {
                 </p>
               </div>
               <p className="text-[9px] tracking-wide uppercase text-[#6A6A6A]">
-                Admin will verify your Chime payment within 24 hours.
+                Admin will verify your payment within 24 hours.
               </p>
             </div>
           ) : (
             /* Payment instructions */
             <div data-ocid="subscription.payment.panel">
+              {/* Chime section */}
               <p className="text-[9px] tracking-[0.3em] uppercase text-[#C9A95C] mb-4 flex items-center gap-2">
                 <CreditCard className="w-3 h-3" />
                 CHIME PAYMENT INSTRUCTIONS
@@ -241,6 +305,40 @@ export default function SubscriptionPage() {
               >
                 {submitting ? "SUBMITTING..." : "REQUEST ACCESS"}
               </button>
+
+              {/* OR divider */}
+              <div className="flex items-center gap-3 my-5">
+                <div className="h-px flex-1 bg-[#2A2A2A]" />
+                <span className="text-[9px] tracking-[0.3em] uppercase text-[#4A4A4A]">
+                  OR
+                </span>
+                <div className="h-px flex-1 bg-[#2A2A2A]" />
+              </div>
+
+              {/* Card / PayPal section */}
+              <div className="border border-[#C9A95C]/15 bg-[#0D0D0D] p-4">
+                <p className="text-[9px] tracking-[0.3em] uppercase text-[#C9A95C] mb-3 flex items-center gap-2">
+                  <CreditCard className="w-3 h-3" />
+                  PAY BY CARD OR PAYPAL
+                </p>
+                <button
+                  type="button"
+                  data-ocid="subscription.card.primary_button"
+                  onClick={handleCardPayment}
+                  disabled={cardPending}
+                  className="w-full py-3.5 bg-[#C9A95C] text-[#0A0A0A] text-[10px] tracking-[0.3em] uppercase font-bold hover:bg-[#E8C878] transition-all disabled:opacity-50 flex items-center justify-center gap-2 mb-1"
+                >
+                  {cardPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      PREPARING CHECKOUT...
+                    </>
+                  ) : (
+                    "PAY $100.00 — CARD OR PAYPAL"
+                  )}
+                </button>
+                <PaymentBadges />
+              </div>
             </div>
           )}
         </div>

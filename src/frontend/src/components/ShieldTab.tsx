@@ -6,7 +6,7 @@ import {
   ScanLine,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQRScanner } from "../qr-code/useQRScanner";
 
 type ShieldSubTab = "scan" | "route";
@@ -84,6 +84,40 @@ function useGeolocation() {
 
   return { coords, error, loading, refresh };
 }
+
+// Map SF lat/lng bounds to SVG 0-100 coordinate space
+const LAT_MIN = 37.77; // bottom  -> y=95
+const LAT_MAX = 37.785; // top     -> y=5
+const LNG_MIN = -122.425; // left   -> x=5
+const LNG_MAX = -122.4; // right  -> x=95
+
+function geoToSvg(lat: number, lng: number): { x: number; y: number } {
+  const xRaw = ((lng - LNG_MIN) / (LNG_MAX - LNG_MIN)) * 90 + 5;
+  const yRaw = ((LAT_MAX - lat) / (LAT_MAX - LAT_MIN)) * 90 + 5;
+  return {
+    x: Math.max(5, Math.min(95, xRaw)),
+    y: Math.max(5, Math.min(95, yRaw)),
+  };
+}
+
+function buildRoutePoints(userX: number, userY: number): string {
+  // Destination
+  const destX = 75;
+  const destY = 18;
+  // Waypoints: nudge east to stay away from x<35 danger zones
+  const mid1X = Math.max(45, userX + (destX - userX) * 0.25);
+  const mid1Y = userY + (destY - userY) * 0.3;
+  const mid2X = Math.max(50, userX + (destX - userX) * 0.6);
+  const mid2Y = userY + (destY - userY) * 0.65;
+  return [
+    `${userX.toFixed(1)},${userY.toFixed(1)}`,
+    `${mid1X.toFixed(1)},${mid1Y.toFixed(1)}`,
+    `${mid2X.toFixed(1)},${mid2Y.toFixed(1)}`,
+    `${destX},${destY}`,
+  ].join(" ");
+}
+
+const STATIC_ROUTE_POINTS = "50,95 52,78 56,62 60,48 65,36 70,26 75,18";
 
 const ROUTE_H_LINES = Array.from({ length: 20 }, (_, i) => ({
   y: i * 5,
@@ -302,13 +336,24 @@ function IdentityScan() {
 }
 
 function RouteDefense() {
-  const ROUTE_POINTS = "50,95 52,78 56,62 60,48 65,36 70,26 75,18";
   const {
     coords,
     error: gpsError,
     loading: gpsLoading,
     refresh,
   } = useGeolocation();
+
+  const svgPos = useMemo(
+    () => (coords ? geoToSvg(coords.lat, coords.lng) : null),
+    [coords],
+  );
+
+  const routePoints = useMemo(() => {
+    if (!svgPos) return STATIC_ROUTE_POINTS;
+    return buildRoutePoints(svgPos.x, svgPos.y);
+  }, [svgPos]);
+
+  const isTracking = !!coords && !gpsLoading;
 
   return (
     <div className="space-y-4">
@@ -371,12 +416,41 @@ function RouteDefense() {
           type="button"
           onClick={refresh}
           data-ocid="shield.route.primary_button"
-          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-[#C9A95C44] text-[#C9A95C] text-[9px] tracking-widest uppercase hover:border-[#C9A95C] hover:bg-[#1A1500] transition-all"
+          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 border text-[9px] tracking-widest uppercase transition-all"
+          style={{
+            borderColor: isTracking
+              ? "rgba(74,158,255,0.5)"
+              : "rgba(201,169,92,0.27)",
+            color: isTracking ? "#4A9EFF" : "#C9A95C",
+            background: isTracking ? "rgba(74,158,255,0.07)" : "transparent",
+          }}
         >
-          <Navigation className="w-3 h-3" />
-          LOCATE ME
+          {isTracking ? (
+            <>
+              <span
+                className="w-2 h-2 rounded-full animate-pulse flex-shrink-0"
+                style={{ background: "#4A9EFF", display: "inline-block" }}
+              />
+              AUTO-TRACKING
+            </>
+          ) : (
+            <>
+              <Navigation className="w-3 h-3" />
+              LOCATE ME
+            </>
+          )}
         </button>
       </div>
+
+      {/* Auto-route status indicator */}
+      {isTracking && (
+        <div
+          className="text-[9px] tracking-widest uppercase font-mono"
+          style={{ color: "#4A9EFF" }}
+        >
+          AUTO-ROUTE ACTIVE — RECALCULATING FROM YOUR POSITION
+        </div>
+      )}
 
       <div className="card-blackgrid">
         <div
@@ -454,7 +528,7 @@ function RouteDefense() {
               />
             ))}
             <polyline
-              points={ROUTE_POINTS}
+              points={routePoints}
               stroke="#C9A95C"
               strokeWidth="1.2"
               fill="none"
@@ -462,13 +536,19 @@ function RouteDefense() {
               strokeLinejoin="round"
             />
             <polyline
-              points={ROUTE_POINTS}
+              points={routePoints}
               stroke="#C9A95C"
               strokeWidth="3"
               fill="none"
               strokeOpacity="0.1"
             />
-            <circle cx="50" cy="95" r="2" fill="#2ECC71" />
+            {/* Origin dot: dynamic when GPS available, static fallback */}
+            <circle
+              cx={svgPos ? svgPos.x : 50}
+              cy={svgPos ? svgPos.y : 95}
+              r="2"
+              fill="#2ECC71"
+            />
             <circle cx="75" cy="18" r="2" fill="#C9A95C" />
             {/* Street name labels */}
             <text
@@ -535,8 +615,8 @@ function RouteDefense() {
             </text>
             {/* Origin / Destination labels */}
             <text
-              x="43"
-              y="93"
+              x={svgPos ? svgPos.x - 7 : 43}
+              y={svgPos ? svgPos.y - 4 : 93}
               fontSize="2.5"
               fill="#2ECC71"
               fillOpacity="0.9"
@@ -555,20 +635,20 @@ function RouteDefense() {
               DESTINATION
             </text>
             {/* GPS — You Are Here */}
-            {coords && !gpsLoading && (
+            {isTracking && svgPos && (
               <g>
                 <circle
-                  cx="50"
-                  cy="88"
+                  cx={svgPos.x}
+                  cy={svgPos.y}
                   r="3"
                   fill="#4A9EFF"
                   fillOpacity="0.25"
                   className="gps-ripple"
                 />
-                <circle cx="50" cy="88" r="2" fill="#4A9EFF" />
+                <circle cx={svgPos.x} cy={svgPos.y} r="2" fill="#4A9EFF" />
                 <text
-                  x="50"
-                  y="84"
+                  x={svgPos.x}
+                  y={svgPos.y - 4}
                   fontSize="2.5"
                   fill="#4A9EFF"
                   fillOpacity="0.95"
