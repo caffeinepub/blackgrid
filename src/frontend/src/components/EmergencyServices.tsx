@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 type PendingAction = {
   label: string;
   href: string;
+  isRide?: boolean;
 };
 
 export default function EmergencyServices() {
@@ -35,14 +36,19 @@ export default function EmergencyServices() {
     );
   }, [isOpen]);
 
-  function handleActionClick(e: React.MouseEvent, label: string, href: string) {
+  function handleActionClick(
+    e: React.MouseEvent,
+    label: string,
+    href: string,
+    isRide?: boolean,
+  ) {
     e.preventDefault();
-    setPendingAction({ label, href });
+    setPendingAction({ label, href, isRide });
   }
 
   function handleConfirm() {
     if (!pendingAction) return;
-    window.location.href = pendingAction.href;
+    window.open(pendingAction.href, "_blank");
     setPendingAction(null);
     setIsOpen(false);
   }
@@ -76,7 +82,7 @@ export default function EmergencyServices() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
+            className="fixed inset-0 z-[9999] flex items-center justify-center px-4 overflow-y-auto py-4"
             style={{ backgroundColor: "rgba(0,0,0,0.92)" }}
             onClick={(e) => {
               if (e.target === e.currentTarget && !pendingAction)
@@ -95,7 +101,7 @@ export default function EmergencyServices() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={{ duration: 0.2 }}
-              className="relative w-full max-w-sm"
+              className="relative w-full max-w-sm my-auto"
               style={{
                 backgroundColor: "#0A0A0A",
                 border: "1px solid rgba(201,169,92,0.55)",
@@ -253,6 +259,80 @@ export default function EmergencyServices() {
                   </a>
                 </div>
 
+                {/* CALL A CAR Section */}
+                <div className="mb-5">
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <div
+                      className="flex-1 h-px"
+                      style={{ backgroundColor: "rgba(201,169,92,0.2)" }}
+                    />
+                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#6A6A6A] px-2">
+                      CALL A CAR — LEAVE NOW
+                    </p>
+                    <div
+                      className="flex-1 h-px"
+                      style={{ backgroundColor: "rgba(201,169,92,0.2)" }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {/* Uber */}
+                    <a
+                      href="https://m.uber.com/ul/"
+                      data-ocid="sos.uber.button"
+                      className="flex flex-col items-center gap-2 p-4 transition-all hover:bg-[#1A1A1A] text-center"
+                      style={{ border: "1px solid rgba(255,255,255,0.15)" }}
+                      onClick={(e) =>
+                        handleActionClick(
+                          e,
+                          "OPEN UBER",
+                          "https://m.uber.com/ul/",
+                          true,
+                        )
+                      }
+                    >
+                      <span className="text-2xl">🚗</span>
+                      <div>
+                        <p className="text-xs font-bold tracking-widest uppercase text-white">
+                          UBER
+                        </p>
+                        <p className="text-[9px] tracking-wide text-[#6A6A6A] mt-0.5">
+                          Request a ride
+                        </p>
+                      </div>
+                    </a>
+
+                    {/* Lyft */}
+                    <a
+                      href="https://www.lyft.com/ride"
+                      data-ocid="sos.lyft.button"
+                      className="flex flex-col items-center gap-2 p-4 transition-all hover:bg-[#1A1A1A] text-center"
+                      style={{ border: "1px solid rgba(201,169,92,0.25)" }}
+                      onClick={(e) =>
+                        handleActionClick(
+                          e,
+                          "OPEN LYFT",
+                          "https://www.lyft.com/ride",
+                          true,
+                        )
+                      }
+                    >
+                      <span className="text-2xl">🚕</span>
+                      <div>
+                        <p
+                          className="text-xs font-bold tracking-widest uppercase"
+                          style={{ color: "#C9A95C" }}
+                        >
+                          LYFT
+                        </p>
+                        <p className="text-[9px] tracking-wide text-[#6A6A6A] mt-0.5">
+                          Request a ride
+                        </p>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+
                 {/* GPS Section */}
                 <div
                   className="mb-4 p-3"
@@ -326,11 +406,15 @@ export default function EmergencyServices() {
                       <div
                         className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
                         style={{
-                          backgroundColor: "rgba(204,0,0,0.15)",
-                          border: "1px solid rgba(204,0,0,0.4)",
+                          backgroundColor: pendingAction.isRide
+                            ? "rgba(201,169,92,0.15)"
+                            : "rgba(204,0,0,0.15)",
+                          border: pendingAction.isRide
+                            ? "1px solid rgba(201,169,92,0.4)"
+                            : "1px solid rgba(204,0,0,0.4)",
                         }}
                       >
-                        📡
+                        {pendingAction.isRide ? "🚗" : "📡"}
                       </div>
                     </div>
 
@@ -344,7 +428,9 @@ export default function EmergencyServices() {
 
                     {/* Message */}
                     <p className="text-center text-white text-sm font-semibold mb-1 tracking-wide">
-                      Are you sure you want to make this call?
+                      {pendingAction.isRide
+                        ? "Open ride app to request a car?"
+                        : "Are you sure you want to make this call?"}
                     </p>
                     <p
                       className="text-center text-[10px] tracking-widest uppercase mb-6"
