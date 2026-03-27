@@ -556,7 +556,7 @@ function BlackTierBanner() {
                   color: "#DDDDDD",
                 }}
               >
-                INVITE ONLY · $500+
+                INVITE ONLY · $300+
               </span>
             </div>
             <p className="text-[#888] text-[11px] tracking-wide mt-1 leading-relaxed">

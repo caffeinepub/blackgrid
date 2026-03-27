@@ -310,7 +310,7 @@ function BlackTierGate() {
         <p className="text-[#8A8A8A] text-sm tracking-wide mb-6 leading-relaxed">
           Hiring bodyguards is exclusively available to{" "}
           <span className="text-[#C9A95C] font-semibold">Black Tier</span>{" "}
-          members. Black Tier membership is invite-only ($500+). Once your
+          members. Black Tier membership is invite-only ($300+). Once your
           membership is confirmed by email, you become a{" "}
           <span className="text-[#C9A95C] font-semibold">
             Blackgrid Vanta Power Tier
@@ -320,7 +320,7 @@ function BlackTierGate() {
 
         <ul className="space-y-2 mb-8">
           {[
-            "Invite-only ($500+ membership)",
+            "Invite-only ($300+ membership)",
             "24–72 hours advance notice for assignments",
             "Armed & unarmed operatives available",
             "Deploy guards anywhere you go",

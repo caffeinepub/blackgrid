@@ -73,7 +73,7 @@ const PRICING = [
   },
   {
     tier: "BLACK",
-    price: "$500+",
+    price: "$300+",
     period: "/ month",
     desc: "Concierge-level security",
     features: [

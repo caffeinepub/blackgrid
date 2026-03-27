@@ -78,7 +78,7 @@ function BlackTierCard() {
   const handleApply = () => {
     const subject = encodeURIComponent("Black Tier Application");
     const body = encodeURIComponent(
-      "I am interested in applying for Black Tier membership to access the BLACKGRID bodyguard hiring feature.\n\nName:\nLocation:\nNote: I understand this is an invite-only program at $500+ and requires 24–72 hours advance notice for assignments.",
+      "I am interested in applying for Black Tier membership to access the BLACKGRID bodyguard hiring feature.\n\nName:\nLocation:\nNote: I understand this is an invite-only program at $300+ and requires 24–72 hours advance notice for assignments.",
     );
     window.location.href = `mailto:acgagc7@gmail.com?subject=${subject}&body=${body}`;
   };
@@ -125,7 +125,7 @@ function BlackTierCard() {
         </div>
         <div className="ml-auto text-right">
           <div className="text-3xl font-bold text-[#C9A95C]">
-            $500<span className="text-lg">+</span>
+            $300<span className="text-lg">+</span>
           </div>
           <div className="text-[10px] tracking-widest text-[#8A8A8A] uppercase">
             invite only
