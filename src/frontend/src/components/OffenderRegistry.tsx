@@ -89,6 +89,7 @@ type SexOffenderEntry = {
   name: string;
   offenseType: string;
   location: string;
+  streetAddress: string;
   neighborhood: string;
   severity: Variant_low_severe_moderate;
   description: string;
@@ -96,6 +97,9 @@ type SexOffenderEntry = {
   tier: "Tier I" | "Tier II" | "Tier III";
   regNumber: string;
   photo: string;
+  age: number;
+  height: string;
+  weight: string;
 };
 
 const MUGSHOTS = [
@@ -112,169 +116,217 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     id: "so-1",
     name: "John A. Doe",
     offenseType: "Lewd Acts with a Minor",
-    location: "500 Block of Mission St",
+    location: "542 Mission St, San Francisco, CA 94105",
+    streetAddress: "542 Mission St",
     neighborhood: "SoMa",
     severity: Variant_low_severe_moderate.severe,
     description:
       "Convicted of lewd acts with a minor under 14 years of age. Required to register for life.",
     registrationStatus: "ACTIVE",
     tier: "Tier III",
-    regNumber: "SF-2024-0031",
+    regNumber: "SF-2026-0031",
     photo: MUGSHOTS[0],
+    age: 47,
+    height: "5'11\"",
+    weight: "195 lbs",
   },
   {
     id: "so-2",
     name: "Marcus T. Webb",
     offenseType: "Sexual Battery",
-    location: "Tenderloin District",
+    location: "127 Turk St, San Francisco, CA 94102",
+    streetAddress: "127 Turk St",
     neighborhood: "Tenderloin",
     severity: Variant_low_severe_moderate.moderate,
     description:
       "Convicted of sexual battery against an adult victim. Required to register for 20 years.",
     registrationStatus: "ACTIVE",
     tier: "Tier II",
-    regNumber: "SF-2024-0087",
+    regNumber: "SF-2026-0087",
     photo: MUGSHOTS[1],
+    age: 34,
+    height: "6'0\"",
+    weight: "210 lbs",
   },
   {
     id: "so-3",
     name: "Robert L. Simmons",
     offenseType: "Rape",
-    location: "800 Block of Market St",
+    location: "814 Market St, San Francisco, CA 94102",
+    streetAddress: "814 Market St",
     neighborhood: "Union Square",
     severity: Variant_low_severe_moderate.severe,
     description:
       "Convicted of rape in the first degree. Lifetime registration requirement.",
     registrationStatus: "ACTIVE",
     tier: "Tier III",
-    regNumber: "SF-2023-0112",
+    regNumber: "SF-2026-0112",
     photo: MUGSHOTS[2],
+    age: 52,
+    height: "5'9\"",
+    weight: "180 lbs",
   },
   {
     id: "so-4",
     name: "Derek P. Morris",
     offenseType: "Child Pornography Possession",
-    location: "Haight-Ashbury District",
+    location: "1823 Haight St, San Francisco, CA 94117",
+    streetAddress: "1823 Haight St",
     neighborhood: "Haight-Ashbury",
     severity: Variant_low_severe_moderate.severe,
     description:
       "Convicted of possession and distribution of child pornography. Lifetime registration requirement.",
     registrationStatus: "ACTIVE",
     tier: "Tier III",
-    regNumber: "SF-2022-0204",
+    regNumber: "SF-2026-0204",
     photo: MUGSHOTS[3],
+    age: 41,
+    height: "5'8\"",
+    weight: "165 lbs",
   },
   {
     id: "so-5",
     name: "Calvin E. Jackson",
     offenseType: "Indecent Exposure",
-    location: "Golden Gate Park Area",
+    location: "330 Arguello Blvd, San Francisco, CA 94118",
+    streetAddress: "330 Arguello Blvd",
     neighborhood: "Inner Richmond",
     severity: Variant_low_severe_moderate.low,
     description:
       "Convicted of indecent exposure. Required to register for 10 years.",
     registrationStatus: "ACTIVE",
     tier: "Tier I",
-    regNumber: "SF-2024-0156",
+    regNumber: "SF-2026-0156",
     photo: MUGSHOTS[4],
+    age: 28,
+    height: "5'10\"",
+    weight: "155 lbs",
   },
   {
     id: "so-6",
     name: "Thomas W. Briggs",
     offenseType: "Statutory Rape",
-    location: "Excelsior District",
+    location: "4455 Mission St, San Francisco, CA 94112",
+    streetAddress: "4455 Mission St",
     neighborhood: "Excelsior",
     severity: Variant_low_severe_moderate.moderate,
     description:
       "Convicted of unlawful sexual intercourse with a minor. 20-year registration requirement.",
     registrationStatus: "ACTIVE",
     tier: "Tier II",
-    regNumber: "SF-2023-0299",
+    regNumber: "SF-2026-0299",
     photo: MUGSHOTS[5],
+    age: 36,
+    height: "6'1\"",
+    weight: "200 lbs",
   },
   {
     id: "so-7",
     name: "Eugene R. Dalton",
     offenseType: "Sexual Assault",
-    location: "Castro District",
+    location: "2248 Market St, San Francisco, CA 94114",
+    streetAddress: "2248 Market St",
     neighborhood: "Castro",
     severity: Variant_low_severe_moderate.severe,
     description:
       "Convicted of aggravated sexual assault. Lifetime registration requirement.",
     registrationStatus: "ACTIVE",
     tier: "Tier III",
-    regNumber: "SF-2021-0341",
+    regNumber: "SF-2026-0341",
     photo: MUGSHOTS[0],
+    age: 44,
+    height: "5'11\"",
+    weight: "190 lbs",
   },
   {
     id: "so-8",
     name: "Franklin D. Kooper",
     offenseType: "Failure to Register as Sex Offender",
-    location: "Bayview District",
+    location: "1901 Cesar Chavez St, San Francisco, CA 94124",
+    streetAddress: "1901 Cesar Chavez St",
     neighborhood: "Bayview",
     severity: Variant_low_severe_moderate.moderate,
     description:
       "Failed to update registration within required timeframe. Added to non-compliant list.",
     registrationStatus: "ACTIVE",
     tier: "Tier II",
-    regNumber: "SF-2024-0402",
+    regNumber: "SF-2026-0402",
     photo: MUGSHOTS[1],
+    age: 39,
+    height: "5'7\"",
+    weight: "175 lbs",
   },
   {
     id: "so-9",
     name: "Victor H. Stanton",
     offenseType: "Lewd Acts with a Minor",
-    location: "Noe Valley",
+    location: "3711 24th St, San Francisco, CA 94114",
+    streetAddress: "3711 24th St",
     neighborhood: "Noe Valley",
     severity: Variant_low_severe_moderate.severe,
     description:
       "Multiple counts of lewd and lascivious acts with children under 14. Lifetime registration.",
     registrationStatus: "ACTIVE",
     tier: "Tier III",
-    regNumber: "SF-2020-0518",
+    regNumber: "SF-2026-0518",
     photo: MUGSHOTS[2],
+    age: 58,
+    height: "6'2\"",
+    weight: "220 lbs",
   },
   {
     id: "so-10",
     name: "Allen B. Mercer",
     offenseType: "Indecent Exposure",
-    location: "Sunset District",
+    location: "2045 Irving St, San Francisco, CA 94122",
+    streetAddress: "2045 Irving St",
     neighborhood: "Outer Sunset",
     severity: Variant_low_severe_moderate.low,
     description:
       "Second conviction for indecent exposure in a public park. 10-year registration requirement.",
     registrationStatus: "ACTIVE",
     tier: "Tier I",
-    regNumber: "SF-2024-0623",
+    regNumber: "SF-2026-0623",
     photo: MUGSHOTS[3],
+    age: 31,
+    height: "5'9\"",
+    weight: "160 lbs",
   },
   {
     id: "so-11",
     name: "George N. Pullman",
     offenseType: "Sexual Battery",
-    location: "Mission District",
+    location: "2988 24th St, San Francisco, CA 94110",
+    streetAddress: "2988 24th St",
     neighborhood: "Mission",
     severity: Variant_low_severe_moderate.moderate,
     description:
       "Convicted of sexual battery against a coworker. 20-year registration requirement.",
     registrationStatus: "ACTIVE",
     tier: "Tier II",
-    regNumber: "SF-2023-0711",
+    regNumber: "SF-2026-0711",
     photo: MUGSHOTS[4],
+    age: 45,
+    height: "5'10\"",
+    weight: "185 lbs",
   },
   {
     id: "so-12",
     name: "Harold C. Finch",
     offenseType: "Rape",
-    location: "Pacific Heights",
+    location: "2710 Broadway St, San Francisco, CA 94115",
+    streetAddress: "2710 Broadway St",
     neighborhood: "Pacific Heights",
     severity: Variant_low_severe_moderate.severe,
     description:
       "Convicted of rape with force and violence. Lifetime registration requirement.",
     registrationStatus: "ACTIVE",
     tier: "Tier III",
-    regNumber: "SF-2019-0845",
+    regNumber: "SF-2026-0845",
     photo: MUGSHOTS[5],
+    age: 62,
+    height: "5'8\"",
+    weight: "170 lbs",
   },
 ];
 
@@ -303,6 +355,7 @@ export default function OffenderRegistry() {
     return (
       o.name.toLowerCase().includes(q) ||
       o.location.toLowerCase().includes(q) ||
+      o.streetAddress.toLowerCase().includes(q) ||
       o.neighborhood.toLowerCase().includes(q) ||
       o.offenseType.toLowerCase().includes(q)
     );
@@ -378,20 +431,27 @@ export default function OffenderRegistry() {
       </div>
 
       {/* Free Access Badge */}
-      <div className="flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center gap-2">
         <div
-          className="inline-flex items-center gap-2 px-4 py-2 border text-xs font-bold tracking-widest uppercase"
+          className="inline-flex items-center gap-2 px-6 py-3 text-xs font-black tracking-widest uppercase"
           style={{
-            borderColor: "#C9A95C",
-            backgroundColor: "rgba(201,169,92,0.08)",
-            color: "#C9A95C",
+            backgroundColor: "#C9A95C",
+            color: "#0A0A0A",
           }}
+          data-ocid="registry.panel"
         >
-          <span style={{ fontSize: "10px" }}>✦</span>
+          <span style={{ fontSize: "12px" }}>✦</span>
           FREE — NO ACCOUNT REQUIRED
-          <span style={{ fontSize: "10px" }}>✦</span>
+          <span style={{ fontSize: "12px" }}>✦</span>
         </div>
+        <p
+          className="text-[11px] font-black tracking-widest uppercase"
+          style={{ color: "#C9A95C" }}
+        >
+          $0.00 FREE
+        </p>
       </div>
+
       {/* Global Search */}
       <div className="space-y-2">
         <Input
@@ -426,7 +486,7 @@ export default function OffenderRegistry() {
                 className="text-[9px] tracking-widest uppercase mt-0.5"
                 style={{ color: "#555" }}
               >
-                SAN FRANCISCO · PUBLIC RECORD
+                SAN FRANCISCO · 2026 ACTIVE REGISTRY
               </p>
             </div>
             <div className="ml-auto flex items-center gap-2">
@@ -481,27 +541,47 @@ export default function OffenderRegistry() {
                   }}
                 >
                   <div className="flex items-start gap-4">
-                    {/* Mugshot Photo */}
+                    {/* Mugshot Photo with WANTED overlay */}
                     <div className="flex flex-col items-center flex-shrink-0">
-                      {failedPhotos.has(offender.id) ? (
+                      <div className="relative w-16 h-20">
+                        {failedPhotos.has(offender.id) ? (
+                          <div
+                            className="w-16 h-20 rounded-sm flex items-center justify-center font-black text-sm"
+                            style={{
+                              backgroundColor: "#C9A95C",
+                              color: "#0A0A0A",
+                            }}
+                          >
+                            {offender.name.charAt(0)}
+                          </div>
+                        ) : (
+                          <img
+                            src={offender.photo}
+                            alt={`${offender.name} booking`}
+                            className="w-16 h-20 object-cover"
+                            style={{ border: "1px solid rgba(204,51,51,0.4)" }}
+                            onError={() => handlePhotoError(offender.id)}
+                          />
+                        )}
+                        {/* WANTED diagonal overlay */}
                         <div
-                          className="w-16 h-20 rounded-sm flex items-center justify-center font-black text-sm"
-                          style={{
-                            backgroundColor: "#C9A95C",
-                            color: "#0A0A0A",
-                          }}
+                          className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden"
+                          style={{ borderRadius: "2px" }}
                         >
-                          {offender.name.charAt(0)}
+                          <div
+                            className="px-1 py-0.5 font-black text-white text-[9px] tracking-widest"
+                            style={{
+                              backgroundColor: "rgba(122,0,0,0.85)",
+                              transform: "rotate(-30deg)",
+                              letterSpacing: "0.15em",
+                              whiteSpace: "nowrap",
+                              textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+                            }}
+                          >
+                            WANTED
+                          </div>
                         </div>
-                      ) : (
-                        <img
-                          src={offender.photo}
-                          alt={`${offender.name} booking`}
-                          className="w-16 h-20 object-cover flex-shrink-0"
-                          style={{ border: "1px solid rgba(204,51,51,0.4)" }}
-                          onError={() => handlePhotoError(offender.id)}
-                        />
-                      )}
+                      </div>
                       <p className="text-[7px] tracking-widest text-[#555] uppercase text-center mt-1">
                         PHOTO
                       </p>
@@ -561,14 +641,44 @@ export default function OffenderRegistry() {
                         {offender.offenseType}
                       </p>
 
-                      {/* Location */}
-                      <div
-                        className="flex items-center gap-3 text-[9px] tracking-widest uppercase"
-                        style={{ color: "#555" }}
+                      {/* Age / Height / Weight */}
+                      <p
+                        className="text-[9px] tracking-widest uppercase"
+                        style={{ color: "#888" }}
                       >
-                        <span>📍 {offender.neighborhood}</span>
-                        <span style={{ color: "#2A2A2A" }}>·</span>
-                        <span>{offender.location}</span>
+                        AGE: {offender.age} · HT: {offender.height} · WT:{" "}
+                        {offender.weight.toUpperCase()}
+                      </p>
+
+                      {/* Location — street address primary, full address secondary */}
+                      <div className="space-y-0.5">
+                        <div
+                          className="flex items-center gap-2 text-[10px] tracking-widest uppercase"
+                          style={{
+                            color: "#AAAAAA",
+                            fontFamily: "'Courier New', Courier, monospace",
+                            fontWeight: 700,
+                          }}
+                        >
+                          <span>📍</span>
+                          <span>{offender.streetAddress}</span>
+                          <span
+                            className="text-[8px] font-bold px-1.5 py-0.5"
+                            style={{
+                              color: "#555",
+                              border: "1px solid #2A2A2A",
+                              backgroundColor: "#0A0A0A",
+                            }}
+                          >
+                            {offender.neighborhood}
+                          </span>
+                        </div>
+                        <p
+                          className="text-[8px] tracking-wider"
+                          style={{ color: "#444", paddingLeft: "20px" }}
+                        >
+                          {offender.location}
+                        </p>
                       </div>
 
                       {/* Description */}
