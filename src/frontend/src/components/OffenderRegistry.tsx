@@ -95,7 +95,17 @@ type SexOffenderEntry = {
   registrationStatus: "ACTIVE";
   tier: "Tier I" | "Tier II" | "Tier III";
   regNumber: string;
+  photo: string;
 };
+
+const MUGSHOTS = [
+  "/assets/generated/mugshot-1.dim_80x100.jpg",
+  "/assets/generated/mugshot-2.dim_80x100.jpg",
+  "/assets/generated/mugshot-3.dim_80x100.jpg",
+  "/assets/generated/mugshot-4.dim_80x100.jpg",
+  "/assets/generated/mugshot-5.dim_80x100.jpg",
+  "/assets/generated/mugshot-6.dim_80x100.jpg",
+];
 
 const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
   {
@@ -110,6 +120,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier III",
     regNumber: "SF-2024-0031",
+    photo: MUGSHOTS[0],
   },
   {
     id: "so-2",
@@ -123,6 +134,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier II",
     regNumber: "SF-2024-0087",
+    photo: MUGSHOTS[1],
   },
   {
     id: "so-3",
@@ -136,6 +148,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier III",
     regNumber: "SF-2023-0112",
+    photo: MUGSHOTS[2],
   },
   {
     id: "so-4",
@@ -149,6 +162,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier III",
     regNumber: "SF-2022-0204",
+    photo: MUGSHOTS[3],
   },
   {
     id: "so-5",
@@ -162,6 +176,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier I",
     regNumber: "SF-2024-0156",
+    photo: MUGSHOTS[4],
   },
   {
     id: "so-6",
@@ -175,6 +190,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier II",
     regNumber: "SF-2023-0299",
+    photo: MUGSHOTS[5],
   },
   {
     id: "so-7",
@@ -188,6 +204,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier III",
     regNumber: "SF-2021-0341",
+    photo: MUGSHOTS[0],
   },
   {
     id: "so-8",
@@ -201,6 +218,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier II",
     regNumber: "SF-2024-0402",
+    photo: MUGSHOTS[1],
   },
   {
     id: "so-9",
@@ -214,6 +232,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier III",
     regNumber: "SF-2020-0518",
+    photo: MUGSHOTS[2],
   },
   {
     id: "so-10",
@@ -227,6 +246,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier I",
     regNumber: "SF-2024-0623",
+    photo: MUGSHOTS[3],
   },
   {
     id: "so-11",
@@ -240,6 +260,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier II",
     regNumber: "SF-2023-0711",
+    photo: MUGSHOTS[4],
   },
   {
     id: "so-12",
@@ -253,6 +274,7 @@ const SEX_OFFENDER_DATA: SexOffenderEntry[] = [
     registrationStatus: "ACTIVE",
     tier: "Tier III",
     regNumber: "SF-2019-0845",
+    photo: MUGSHOTS[5],
   },
 ];
 
@@ -272,6 +294,7 @@ export default function OffenderRegistry() {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState<NewOffenderForm>(DEFAULT_FORM);
+  const [failedPhotos, setFailedPhotos] = useState<Set<string>>(new Set());
 
   // Filter sex offender data
   const filteredSexOffenders = SEX_OFFENDER_DATA.filter((o) => {
@@ -314,6 +337,10 @@ export default function OffenderRegistry() {
     await addOffender.mutateAsync(record);
     setForm(DEFAULT_FORM);
     setShowAddForm(false);
+  };
+
+  const handlePhotoError = (id: string) => {
+    setFailedPhotos((prev) => new Set(prev).add(id));
   };
 
   return (
@@ -407,12 +434,30 @@ export default function OffenderRegistry() {
                   }}
                 >
                   <div className="flex items-start gap-4">
-                    {/* Letter Avatar */}
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-black text-sm"
-                      style={{ backgroundColor: "#C9A95C", color: "#0A0A0A" }}
-                    >
-                      {offender.name.charAt(0)}
+                    {/* Mugshot Photo */}
+                    <div className="flex flex-col items-center flex-shrink-0">
+                      {failedPhotos.has(offender.id) ? (
+                        <div
+                          className="w-16 h-20 rounded-sm flex items-center justify-center font-black text-sm"
+                          style={{
+                            backgroundColor: "#C9A95C",
+                            color: "#0A0A0A",
+                          }}
+                        >
+                          {offender.name.charAt(0)}
+                        </div>
+                      ) : (
+                        <img
+                          src={offender.photo}
+                          alt={`${offender.name} booking`}
+                          className="w-16 h-20 object-cover flex-shrink-0"
+                          style={{ border: "1px solid rgba(204,51,51,0.4)" }}
+                          onError={() => handlePhotoError(offender.id)}
+                        />
+                      )}
+                      <p className="text-[7px] tracking-widest text-[#555] uppercase text-center mt-1">
+                        PHOTO
+                      </p>
                     </div>
 
                     {/* Content */}

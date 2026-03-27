@@ -36,7 +36,6 @@ type Tab =
   | "network"
   | "guards";
 
-const _FREE_TABS: Tab[] = ["intelligence", "subscription"];
 const LOCKED_TABS: Tab[] = [
   "dashboard",
   "shield",
@@ -238,7 +237,8 @@ function ElitePaywall({ onUpgrade }: { onUpgrade: () => void }) {
         <p className="text-[#8A8A8A] text-sm tracking-wide mb-6">
           This feature requires an active{" "}
           <span className="text-[#C9A95C] font-semibold">BLACKGRID Elite</span>{" "}
-          membership.
+          membership. Intelligence Feed is free — all other features require
+          Elite membership.
         </p>
 
         <ul className="space-y-2 mb-8">
@@ -247,7 +247,8 @@ function ElitePaywall({ onUpgrade }: { onUpgrade: () => void }) {
             "Route Defense & Safe Passages",
             "Offender Registry Access",
             "Watchlist & Network Directory",
-            "Guard Network — Hire Bodyguards",
+            "Identity Badge & Profile",
+            "Network Directory",
           ].map((feature) => (
             <li key={feature} className="flex items-center gap-2">
               <span className="text-[#C9A95C] text-xs">▸</span>
@@ -266,6 +267,81 @@ function ElitePaywall({ onUpgrade }: { onUpgrade: () => void }) {
         >
           UPGRADE NOW — $100.00/MO
         </button>
+      </div>
+    </motion.div>
+  );
+}
+
+function BlackTierGate() {
+  return (
+    <motion.div
+      key="black-tier-gate"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.25 }}
+      className="flex items-center justify-center min-h-[60vh]"
+      data-ocid="black_tier_gate.panel"
+    >
+      <div
+        className="max-w-md w-full mx-auto p-8"
+        style={{
+          background: "#0A0A0A",
+          border: "1px solid rgba(201,169,92,0.6)",
+          boxShadow:
+            "0 0 40px rgba(201,169,92,0.18), 0 0 6px rgba(201,169,92,0.1)",
+        }}
+      >
+        <div className="mb-2">
+          <p className="text-[9px] tracking-[0.45em] text-[#6A6A6A] uppercase mb-3">
+            BLACKGRID VANTA
+          </p>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-[#C9A95C] text-2xl">⬛</span>
+            <h2
+              className="text-[#C9A95C] text-lg font-bold uppercase"
+              style={{ letterSpacing: "0.25em" }}
+            >
+              BLACK TIER REQUIRED
+            </h2>
+          </div>
+        </div>
+
+        <p className="text-[#8A8A8A] text-sm tracking-wide mb-6 leading-relaxed">
+          Hiring bodyguards is exclusively available to{" "}
+          <span className="text-[#C9A95C] font-semibold">Black Tier</span>{" "}
+          members. Black Tier membership is invite-only ($500+). Once your
+          membership is confirmed by email, you become a{" "}
+          <span className="text-[#C9A95C] font-semibold">
+            Blackgrid Vanta Power Tier
+          </span>{" "}
+          member with full access to hire bodyguards anywhere.
+        </p>
+
+        <ul className="space-y-2 mb-8">
+          {[
+            "Invite-only ($500+ membership)",
+            "24–72 hours advance notice for assignments",
+            "Armed & unarmed operatives available",
+            "Deploy guards anywhere you go",
+            "Become a Vanta Power Tier Ambassador",
+          ].map((feature) => (
+            <li key={feature} className="flex items-center gap-2">
+              <span className="text-[#C9A95C] text-xs">▸</span>
+              <span className="text-[#AAAAAA] text-xs tracking-widest uppercase">
+                {feature}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <a
+          href="mailto:acgagc7@gmail.com?subject=Black Tier Application"
+          data-ocid="black_tier_gate.primary_button"
+          className="block w-full py-3 bg-[#C9A95C] text-[#0A0A0A] text-xs tracking-[0.25em] uppercase font-bold hover:bg-[#E8C878] transition-all text-center"
+        >
+          APPLY FOR BLACK TIER
+        </a>
       </div>
     </motion.div>
   );
@@ -673,6 +749,8 @@ function AuthenticatedApp({
                   key="paywall-guards"
                   onUpgrade={() => setActiveTab("subscription")}
                 />
+              ) : !isAdmin ? (
+                <BlackTierGate key="black-tier-gate" />
               ) : (
                 <motion.div
                   key="guards"
