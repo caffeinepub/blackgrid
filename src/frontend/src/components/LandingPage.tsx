@@ -72,6 +72,7 @@ const PRICING = [
       "Intelligence Feed (live incidents)",
       "Public incident map",
       "SF area alerts",
+      "Sex Offender Registry (free, no login)",
     ],
     cta: "GET STARTED",
     style: "default",
@@ -84,7 +85,6 @@ const PRICING = [
     features: [
       "Live Threat Grid Dashboard",
       "Route Defense with GPS",
-      "Sex Offender Registry",
       "Watchlist (unlimited contacts)",
       "Secure Identity Badge & QR",
       "Network Directory",
@@ -775,6 +775,17 @@ export default function LandingPage({
               className="px-8 py-3 border border-[#C9A95C] text-[#C9A95C] text-xs tracking-widest uppercase hover:bg-[#C9A95C0A] transition-all"
             >
               HOW IT WORKS
+            </button>
+          </div>
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() => onTabChange?.("registry")}
+              data-ocid="hero.registry.button"
+              className="inline-flex items-center gap-2 px-6 py-2.5 border border-[#2ECC71] text-[#2ECC71] text-[10px] tracking-widest uppercase font-bold hover:bg-[#2ECC7115] transition-all"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2ECC71] animate-pulse inline-block" />
+              VIEW SEX OFFENDER REGISTRY — FREE · NO ACCOUNT REQUIRED
             </button>
           </div>
         </motion.div>

@@ -237,15 +237,14 @@ function ElitePaywall({ onUpgrade }: { onUpgrade: () => void }) {
         <p className="text-[#8A8A8A] text-sm tracking-wide mb-6">
           This feature requires an active{" "}
           <span className="text-[#C9A95C] font-semibold">BLACKGRID Elite</span>{" "}
-          membership. Intelligence Feed is free — all other features require
-          Elite membership.
+          membership. Intelligence Feed and Sex Offender Registry are free — all
+          other features require Elite membership.
         </p>
 
         <ul className="space-y-2 mb-8">
           {[
             "Live Threat Grid Dashboard",
             "Route Defense & Safe Passages",
-            "Offender Registry Access",
             "Watchlist & Network Directory",
             "Identity Badge & Profile",
             "Network Directory",
@@ -456,14 +455,28 @@ function Navbar({
             </button>
           </>
         ) : (
-          <button
-            type="button"
-            onClick={handleLogin}
-            data-ocid="nav.login.primary_button"
-            className="px-5 py-1.5 bg-[#C9A95C] text-[#0A0A0A] text-[10px] tracking-widest uppercase font-bold hover:bg-[#E8C878] transition-all"
-          >
-            ACCESS
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onTabChange("registry")}
+              data-ocid="nav.registry.link"
+              className={`px-3 py-1.5 text-[9px] tracking-widest uppercase transition-all ${
+                activeTab === "registry"
+                  ? "text-[#C9A95C] border-b border-[#C9A95C]"
+                  : "text-[#8A8A8A] hover:text-[#C9A95C]"
+              }`}
+            >
+              REGISTRY
+            </button>
+            <button
+              type="button"
+              onClick={handleLogin}
+              data-ocid="nav.login.primary_button"
+              className="px-5 py-1.5 bg-[#C9A95C] text-[#0A0A0A] text-[10px] tracking-widest uppercase font-bold hover:bg-[#E8C878] transition-all"
+            >
+              ACCESS
+            </button>
+          </div>
         )}
       </div>
     </header>
@@ -692,23 +705,17 @@ function AuthenticatedApp({
                   <ShieldTab />
                 </motion.div>
               ))}
-            {activeTab === "registry" &&
-              (isTabLocked("registry") ? (
-                <ElitePaywall
-                  key="paywall-registry"
-                  onUpgrade={() => setActiveTab("subscription")}
-                />
-              ) : (
-                <motion.div
-                  key="registry"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <OffenderRegistry />
-                </motion.div>
-              ))}
+            {activeTab === "registry" && (
+              <motion.div
+                key="registry"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <OffenderRegistry />
+              </motion.div>
+            )}
             {activeTab === "profile" &&
               (isTabLocked("profile") ? (
                 <ElitePaywall
@@ -853,7 +860,7 @@ export default function App() {
       <AnimatePresence mode="wait">
         {!isAuthenticated ? (
           <motion.div
-            key="landing"
+            key="unauthenticated"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -867,10 +874,14 @@ export default function App() {
               onLogoClick={handleLogoClick}
             />
             <main className="pt-14">
-              <LandingPage
-                onLogin={login}
-                onTabChange={(tab) => setActiveTab(tab as Tab)}
-              />
+              {activeTab === "registry" ? (
+                <OffenderRegistry />
+              ) : (
+                <LandingPage
+                  onLogin={login}
+                  onTabChange={(tab) => setActiveTab(tab as Tab)}
+                />
+              )}
             </main>
           </motion.div>
         ) : (
