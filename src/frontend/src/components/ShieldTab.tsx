@@ -6,10 +6,84 @@ import {
   ScanLine,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQRScanner } from "../qr-code/useQRScanner";
 
 type ShieldSubTab = "scan" | "route";
+
+interface GeoCoords {
+  lat: number;
+  lng: number;
+  accuracy: number;
+}
+
+function useGeolocation() {
+  const [coords, setCoords] = useState<GeoCoords | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const watchIdRef = useRef<number | null>(null);
+
+  const startWatch = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError("GEOLOCATION NOT SUPPORTED");
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+    }
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        setCoords({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: Math.round(pos.coords.accuracy),
+        });
+        setLoading(false);
+        setError(null);
+      },
+      (err) => {
+        setError(err.message.toUpperCase());
+        setLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  }, []);
+
+  const refresh = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setLoading(true);
+    setError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: Math.round(pos.coords.accuracy),
+        });
+        setLoading(false);
+      },
+      (err) => {
+        setError(err.message.toUpperCase());
+        setLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  }, []);
+
+  useEffect(() => {
+    startWatch();
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, [startWatch]);
+
+  return { coords, error, loading, refresh };
+}
 
 const ROUTE_H_LINES = Array.from({ length: 20 }, (_, i) => ({
   y: i * 5,
@@ -229,6 +303,12 @@ function IdentityScan() {
 
 function RouteDefense() {
   const ROUTE_POINTS = "50,95 52,78 56,62 60,48 65,36 70,26 75,18";
+  const {
+    coords,
+    error: gpsError,
+    loading: gpsLoading,
+    refresh,
+  } = useGeolocation();
 
   return (
     <div className="space-y-4">
@@ -240,6 +320,62 @@ function RouteDefense() {
           <div className="w-1.5 h-1.5 rounded-full bg-[#2ECC71] animate-pulse" />
           SAFEST ROUTE CALCULATED
         </div>
+      </div>
+
+      {/* GPS Status Bar */}
+      <div
+        className="card-blackgrid flex items-center justify-between gap-3"
+        style={{
+          borderColor: gpsError
+            ? "rgba(192,0,0,0.3)"
+            : coords
+              ? "rgba(74,158,255,0.3)"
+              : "rgba(201,169,92,0.2)",
+        }}
+        data-ocid="shield.route.panel"
+      >
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {gpsLoading && (
+            <>
+              <div className="w-2 h-2 rounded-full bg-[#C9A95C] animate-pulse flex-shrink-0" />
+              <span className="text-[10px] tracking-widest uppercase text-[#C9A95C] font-mono">
+                ACQUIRING GPS SIGNAL...
+              </span>
+            </>
+          )}
+          {!gpsLoading && gpsError && (
+            <>
+              <div className="w-2 h-2 rounded-full bg-[#C00000] flex-shrink-0" />
+              <span className="text-[10px] tracking-widest uppercase text-[#C00000] font-mono truncate">
+                {gpsError}
+              </span>
+            </>
+          )}
+          {!gpsLoading && !gpsError && coords && (
+            <>
+              <div
+                className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse"
+                style={{ background: "#4A9EFF" }}
+              />
+              <span
+                className="text-[10px] tracking-widest uppercase font-mono"
+                style={{ color: "#4A9EFF" }}
+              >
+                {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}&nbsp;&nbsp;±
+                {coords.accuracy}m
+              </span>
+            </>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={refresh}
+          data-ocid="shield.route.primary_button"
+          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-[#C9A95C44] text-[#C9A95C] text-[9px] tracking-widest uppercase hover:border-[#C9A95C] hover:bg-[#1A1500] transition-all"
+        >
+          <Navigation className="w-3 h-3" />
+          LOCATE ME
+        </button>
       </div>
 
       <div className="card-blackgrid">
@@ -255,6 +391,17 @@ function RouteDefense() {
             aria-label="Route defense map showing safest path"
           >
             <title>Route Defense Map</title>
+            <defs>
+              <style>{`
+                @keyframes gps-ripple {
+                  0% { r: 3; opacity: 0.6; }
+                  100% { r: 8; opacity: 0; }
+                }
+                .gps-ripple {
+                  animation: gps-ripple 1.6s ease-out infinite;
+                }
+              `}</style>
+            </defs>
             <rect width="100" height="100" fill="#0A0A0A" />
             {ROUTE_H_LINES.map((line) => (
               <line
@@ -407,10 +554,35 @@ function RouteDefense() {
             >
               DESTINATION
             </text>
+            {/* GPS — You Are Here */}
+            {coords && !gpsLoading && (
+              <g>
+                <circle
+                  cx="50"
+                  cy="88"
+                  r="3"
+                  fill="#4A9EFF"
+                  fillOpacity="0.25"
+                  className="gps-ripple"
+                />
+                <circle cx="50" cy="88" r="2" fill="#4A9EFF" />
+                <text
+                  x="50"
+                  y="84"
+                  fontSize="2.5"
+                  fill="#4A9EFF"
+                  fillOpacity="0.95"
+                  fontFamily="monospace"
+                  textAnchor="middle"
+                >
+                  YOU
+                </text>
+              </g>
+            )}
           </svg>
         </div>
 
-        <div className="flex items-center gap-6 mt-4">
+        <div className="flex items-center gap-6 mt-4 flex-wrap">
           <div className="flex items-center gap-2">
             <div className="w-6 h-0.5 bg-[#C9A95C]" />
             <span className="text-[10px] tracking-wider uppercase text-[#C9A95C]">
@@ -427,6 +599,15 @@ function RouteDefense() {
             <div className="w-2 h-2 rounded-full bg-[#2ECC71]" />
             <span className="text-[10px] tracking-wider uppercase text-[#B8B8B8]">
               Current
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ background: "#4A9EFF" }}
+            />
+            <span className="text-[10px] tracking-wider uppercase text-[#B8B8B8]">
+              You Are Here
             </span>
           </div>
         </div>
