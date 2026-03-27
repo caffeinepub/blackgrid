@@ -6,6 +6,7 @@ import AdminPanel from "./components/AdminPanel";
 import BodyguardDirectory from "./components/BodyguardDirectory";
 import DashboardTab from "./components/DashboardTab";
 import EmergencyServices from "./components/EmergencyServices";
+import FamilySafetyTab from "./components/FamilySafetyTab";
 import IntelligenceTab from "./components/IntelligenceTab";
 import LandingPage from "./components/LandingPage";
 import NetworkTab from "./components/NetworkTab";
@@ -35,13 +36,13 @@ type Tab =
   | "subscription"
   | "profile"
   | "network"
-  | "guards";
+  | "guards"
+  | "family";
 
 const LOCKED_TABS: Tab[] = [
   "dashboard",
   "shield",
   "profile",
-
   "network",
   "guards",
   "watchlist",
@@ -56,6 +57,7 @@ const NAV_TABS: { id: Tab; label: string }[] = [
   { id: "network", label: "NETWORK" },
   { id: "guards", label: "GUARDS" },
   { id: "watchlist", label: "WATCHLIST" },
+  { id: "family", label: "FAMILY" },
   { id: "subscription", label: "SUBSCRIPTION" },
 ];
 
@@ -396,6 +398,7 @@ function Navbar({
           {NAV_TABS.map((tab) => {
             const isLocked = !isPaid && LOCKED_TABS.includes(tab.id);
             const isActive = activeTab === tab.id;
+            const isFamilyTab = tab.id === "family";
             return (
               <button
                 type="button"
@@ -404,13 +407,26 @@ function Navbar({
                 data-ocid={`nav.${tab.id}.link`}
                 className={`relative px-4 py-1.5 text-[10px] tracking-widest uppercase transition-all ${
                   isActive
-                    ? "text-[#C9A95C] border-b border-[#C9A95C]"
+                    ? isFamilyTab
+                      ? "border-b-2"
+                      : "text-[#C9A95C] border-b border-[#C9A95C]"
                     : isLocked
                       ? "text-[#4A4A4A] hover:text-[#6A6A6A]"
-                      : "text-[#8A8A8A] hover:text-[#EDEDED]"
+                      : isFamilyTab
+                        ? "hover:opacity-80"
+                        : "text-[#8A8A8A] hover:text-[#EDEDED]"
                 }`}
+                style={
+                  isFamilyTab
+                    ? {
+                        color: isActive ? "#EC4899" : "#F59E0B",
+                        borderColor: isActive ? "#EC4899" : undefined,
+                        fontWeight: 700,
+                      }
+                    : undefined
+                }
               >
-                {tab.label}
+                {isFamilyTab ? "🌈 FAMILY" : tab.label}
                 {isLocked && (
                   <span className="ml-1 text-[#C9A95C] opacity-60 text-[9px]">
                     🔒
@@ -505,6 +521,7 @@ function MobileNav({
     >
       {NAV_TABS.map((tab) => {
         const isLocked = !isPaid && LOCKED_TABS.includes(tab.id);
+        const isFamilyTab = tab.id === "family";
         return (
           <button
             type="button"
@@ -513,14 +530,27 @@ function MobileNav({
             data-ocid={`mobile_nav.${tab.id}.link`}
             className={`relative flex-1 py-3 text-[7px] tracking-widest uppercase transition-all min-w-[3rem] ${
               activeTab === tab.id
-                ? "text-[#C9A95C]"
+                ? isFamilyTab
+                  ? ""
+                  : "text-[#C9A95C]"
                 : isLocked
                   ? "text-[#3A3A3A]"
-                  : "text-[#8A8A8A]"
+                  : isFamilyTab
+                    ? ""
+                    : "text-[#8A8A8A]"
             }`}
+            style={
+              isFamilyTab
+                ? {
+                    color: activeTab === tab.id ? "#EC4899" : "#F59E0B",
+                    fontWeight: 700,
+                  }
+                : undefined
+            }
           >
-            {tab.label}
-            {isLocked && (
+            {isFamilyTab ? "🌈" : tab.label}
+            {isFamilyTab && <span className="block text-[6px]">FAMILY</span>}
+            {isLocked && !isFamilyTab && (
               <span className="block text-[7px] text-[#C9A95C] opacity-50">
                 🔒
               </span>
@@ -770,6 +800,17 @@ function AuthenticatedApp({
                   <BodyguardDirectory />
                 </motion.div>
               ))}
+            {activeTab === "family" && (
+              <motion.div
+                key="family"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <FamilySafetyTab />
+              </motion.div>
+            )}
             {activeTab === "subscription" && (
               <motion.div
                 key="subscription"
