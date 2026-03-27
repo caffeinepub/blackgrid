@@ -5,13 +5,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, Eye, Navigation, Shield, Zap } from "lucide-react";
+import {
+  Check,
+  Eye,
+  FileSearch,
+  Lock,
+  MapPin,
+  Navigation,
+  Shield,
+  UserCheck,
+  Zap,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
 import { getSessionParameter, storeSessionParameter } from "../utils/urlParams";
 import AlertTicker from "./AlertTicker";
 import KPIRow from "./KPIRow";
 import LiveMap from "./LiveMap";
+import TutorialOverlay from "./TutorialOverlay";
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -20,24 +31,34 @@ interface LandingPageProps {
 
 const FEATURES = [
   {
-    icon: Shield,
-    title: "AI Threat Detection",
-    desc: "Real-time behavior analysis and pattern recognition identify risks before they escalate.",
-  },
-  {
-    icon: Eye,
-    title: "Identity Intelligence",
-    desc: "Consent-based verified identity scanning. Know who matters, instantly.",
+    icon: MapPin,
+    title: "Live Threat Grid Map",
+    desc: "Blacked-out SF map with real-time risk zones, verified users, blind spots, and labeled street names for situational awareness.",
   },
   {
     icon: Navigation,
     title: "Route Defense",
-    desc: "Dynamic safe-route generation avoids high-risk zones and recent incident areas.",
+    desc: "GPS-powered safest route suggestions. Live tracking, compass heading, auto-recalculation around high-crime zones, and turn-by-turn steps.",
+  },
+  {
+    icon: FileSearch,
+    title: "Sex Offender Registry",
+    desc: "Active SF-area registry with Tier I/II/III badges, mugshots, offense types, and neighborhood locations. Searchable and filterable.",
   },
   {
     icon: Zap,
-    title: "Live Threat Grid",
-    desc: "SFPD public feeds, user network signals, and environmental data fused in real-time.",
+    title: "Intelligence Feed",
+    desc: "Live incident data from SFPD public reports and local emergency feeds. Free tier available — upgrade for full real-time access.",
+  },
+  {
+    icon: Shield,
+    title: "Black Tier Bodyguard Hiring",
+    desc: "Hire vetted SF operatives directly from the app. Armed or unarmed. Variable pricing based on number of guards and hours. Invite-only.",
+  },
+  {
+    icon: Lock,
+    title: "Secure Identity Badge & QR",
+    desc: "Consent-based encrypted ID badge sharing via QR scan or phone tap. Verified identity for your network of trusted operatives.",
   },
 ];
 
@@ -45,43 +66,46 @@ const PRICING = [
   {
     tier: "FREE",
     price: "$0",
-    period: "/ month",
-    desc: "Basic situational awareness",
+    period: "",
+    desc: "Situational awareness, no cost",
     features: [
-      "Basic map alerts",
-      "Limited scan (3/day)",
-      "Public incident feed",
+      "Intelligence Feed (live incidents)",
+      "Public incident map",
+      "SF area alerts",
     ],
     cta: "GET STARTED",
     style: "default",
   },
   {
     tier: "ELITE",
-    price: "$79",
-    period: "/ month",
-    desc: "Full AI-powered protection",
+    price: "$100",
+    period: "one-time",
+    desc: "Full platform access",
     features: [
-      "Unlimited AI detection",
-      "Watchlist system",
-      "Route defense mode",
-      "Priority alerts",
-      "Identity scan",
+      "Live Threat Grid Dashboard",
+      "Route Defense with GPS",
+      "Sex Offender Registry",
+      "Watchlist (unlimited contacts)",
+      "Secure Identity Badge & QR",
+      "Network Directory",
+      "Profile creation",
     ],
     cta: "ACTIVATE ELITE",
     style: "gold",
     badge: "MOST POPULAR",
   },
   {
-    tier: "BLACK",
+    tier: "BLACK TIER",
     price: "$300+",
-    period: "/ month",
-    desc: "Concierge-level security",
+    period: "invite only",
+    desc: "Bodyguard hiring program",
     features: [
-      "Live human analysts",
-      "Emergency override",
-      "Private security integration",
-      "Stealth vibration alerts",
       "All Elite features",
+      "Vetted SF operatives",
+      "Armed & unarmed guards",
+      "Live guard location map",
+      "Variable pricing calculator",
+      "Vanta Power Tier status",
     ],
     cta: "REQUEST INVITE",
     style: "black",
@@ -504,6 +528,39 @@ function ContactContent() {
   );
 }
 
+function ShareUrlBar() {
+  const [copied, setCopied] = useState(false);
+  const url = window.location.href.split("?")[0].split("#")[0];
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-0 max-w-lg mx-auto">
+      <div className="flex-1 border border-[#2A2A2A] bg-[#0A0A0A] px-4 py-2.5 text-left overflow-hidden">
+        <span className="text-[10px] tracking-wider text-[#8A8A8A] font-mono truncate block">
+          {url}
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={handleCopy}
+        data-ocid="share.copy_button"
+        className="px-4 py-2.5 border border-[#C9A95C] bg-[#C9A95C0A] text-[#C9A95C] text-[10px] tracking-widest uppercase font-bold hover:bg-[#C9A95C] hover:text-[#0A0A0A] transition-all whitespace-nowrap"
+      >
+        {copied ? "COPIED ✓" : "COPY LINK"}
+      </button>
+    </div>
+  );
+}
+
 function AdminSetupContent({ onClose }: { onClose: () => void }) {
   const [token, setToken] = useState("");
   const [saved, setSaved] = useState(false);
@@ -661,6 +718,7 @@ export default function LandingPage({
   onTabChange,
 }: LandingPageProps) {
   const [openModal, setOpenModal] = useState<ModalType>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const activeModal =
     openModal && openModal !== "adminSetup" ? MODAL_CONFIG[openModal] : null;
@@ -710,6 +768,14 @@ export default function LandingPage({
               className="px-8 py-3 border border-[#2A2A2A] text-[#B8B8B8] text-xs tracking-widest uppercase hover:border-[#C9A95C] hover:text-[#C9A95C] transition-all"
             >
               VIEW CAPABILITIES
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowTutorial(true)}
+              data-ocid="hero.secondary_button"
+              className="px-8 py-3 border border-[#C9A95C] text-[#C9A95C] text-xs tracking-widest uppercase hover:bg-[#C9A95C0A] transition-all"
+            >
+              HOW IT WORKS
             </button>
           </div>
         </motion.div>
@@ -774,7 +840,7 @@ export default function LandingPage({
               See Everything That Matters
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {FEATURES.map((feat, i) => (
               <motion.div
                 key={feat.title}
@@ -890,6 +956,50 @@ export default function LandingPage({
         </motion.div>
       </section>
 
+      {/* Bottom CTA / Share Section */}
+      <section className="px-6 md:px-12 lg:px-24 pb-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="border border-[#C9A95C33] bg-[#0D0D00] p-10 md:p-16 text-center max-w-4xl mx-auto"
+        >
+          <div className="text-[10px] tracking-widest uppercase text-[#C9A95C] mb-4">
+            NOW AVAILABLE · SAN FRANCISCO
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold tracking-wider uppercase text-[#EDEDED] mb-4 leading-tight">
+            See Everything
+            <br />
+            <span className="text-[#C9A95C]">That Matters.</span>
+          </h2>
+          <p className="text-sm text-[#8A8A8A] tracking-wider max-w-xl mx-auto mb-8 leading-relaxed">
+            BLACKGRID is the luxury intelligence platform for those who refuse
+            to move through the world blind. Available in San Francisco.
+            Expanding nationwide.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+            <button
+              type="button"
+              onClick={onLogin}
+              data-ocid="cta.primary_button"
+              className="px-10 py-4 bg-[#C9A95C] text-[#0A0A0A] text-xs tracking-widest uppercase font-bold hover:bg-[#E8C878] transition-all gold-glow"
+            >
+              REQUEST ACCESS — $100
+            </button>
+            <button
+              type="button"
+              onClick={onLogin}
+              data-ocid="cta.secondary_button"
+              className="px-10 py-4 border border-[#2A2A2A] text-[#8A8A8A] text-xs tracking-widest uppercase hover:border-[#C9A95C] hover:text-[#C9A95C] transition-all"
+            >
+              BLACK TIER INQUIRY — $300+
+            </button>
+          </div>
+          <ShareUrlBar />
+        </motion.div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-[#1A1A1A] px-6 md:px-12 lg:px-24 py-12">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
@@ -946,6 +1056,10 @@ export default function LandingPage({
           </p>
         </div>
       </footer>
+
+      {showTutorial && (
+        <TutorialOverlay onClose={() => setShowTutorial(false)} />
+      )}
 
       {/* Legal / Info Modals */}
       <Dialog

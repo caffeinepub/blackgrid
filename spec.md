@@ -1,33 +1,22 @@
 # BLACKGRID
 
 ## Current State
-New project. No existing application files.
+Full-featured luxury security app with Dashboard, Intelligence, Watchlist, Route Defense, Registry, Profile, Network, Guards, Subscription tabs. LandingPage component exists. App.tsx is the main entry point.
 
 ## Requested Changes (Diff)
 
 ### Add
-- Full BLACKGRID personal security intelligence web application
-- Live Grid Map dashboard with simulated risk zones (red/yellow/green pulsing markers)
-- Security Score gauge (radial/ring progress, 0-100, dynamic based on area)
-- Threat Alerts panel with critical/active/warning counts
-- Identity Scan screen (QR-based consent scanning with verified profile display)
-- Watchlist system: add/tag/note people as Safe/Unknown/Avoid with interaction logs
-- Route Defense mode: map with safer path suggestion, avoidance zones
-- Threat Alert full-screen interruption flow
-- User authentication and profile creation (verified identity, trust level)
-- Subscription tier display: Free / Elite ($79/mo) / BLACK ($500+/mo)
-- Live alert ticker showing recent incidents (simulated public feed)
-- Navigation: Intelligence, Dashboard, Shield, Reports, Watchlist
-- Landing/marketing page with hero, feature cards, pricing tiers
+- TutorialOverlay.tsx: A step-by-step interactive tutorial (7 steps) launched from a "HOW IT WORKS" button on the landing page. Uses Web Speech API (window.speechSynthesis) to narrate each step. Controls: PLAY, PAUSE, NEXT, PREV, CLOSE. Progress bar. Steps cover: Welcome, Dashboard/Threat Map, Intelligence Feed, Route Defense, Sex Offender Registry, Guards/Black Tier, Profile/Identity Badge. Matte black + gold BLACKGRID branding.
+- Public shareable URL: Landing page is accessible at root without login.
 
 ### Modify
-- N/A (new project)
+- LandingPage.tsx: Add HOW IT WORKS button that opens TutorialOverlay.
+- App.tsx: Ensure root route shows LandingPage without auth gate.
 
 ### Remove
-- N/A (new project)
+- Nothing.
 
 ## Implementation Plan
-1. Backend: User profiles with verification level, watchlist entries (tag + notes + interaction history), threat alerts feed, security score calculation, subscription tiers
-2. Frontend: Multi-page app with nav, landing hero, live map dashboard, watchlist CRUD, identity scan UI, threat alert overlay, route defense view, pricing page
-3. Map: Canvas/SVG-based dark map with animated pulsing zone markers (no external API dependency)
-4. Components: authorization (user accounts), qr-code (identity scan), invite-links (Black tier invite-only access)
+1. Create TutorialOverlay.tsx component with voice narration and step navigation.
+2. Add HOW IT WORKS button to LandingPage.
+3. Verify App.tsx root route is publicly accessible.
