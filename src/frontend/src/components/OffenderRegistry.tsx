@@ -377,6 +377,21 @@ export default function OffenderRegistry() {
         </p>
       </div>
 
+      {/* Free Access Badge */}
+      <div className="flex items-center justify-center">
+        <div
+          className="inline-flex items-center gap-2 px-4 py-2 border text-xs font-bold tracking-widest uppercase"
+          style={{
+            borderColor: "#C9A95C",
+            backgroundColor: "rgba(201,169,92,0.08)",
+            color: "#C9A95C",
+          }}
+        >
+          <span style={{ fontSize: "10px" }}>✦</span>
+          FREE — NO ACCOUNT REQUIRED
+          <span style={{ fontSize: "10px" }}>✦</span>
+        </div>
+      </div>
       {/* Global Search */}
       <div className="space-y-2">
         <Input
