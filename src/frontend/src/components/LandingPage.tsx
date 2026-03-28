@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
+  AlertTriangle,
   Check,
   Eye,
   FileSearch,
@@ -14,6 +15,7 @@ import {
   Navigation,
   Shield,
   UserCheck,
+  Users,
   Zap,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -29,40 +31,79 @@ interface LandingPageProps {
   onTabChange?: (tab: string) => void;
 }
 
-const FEATURES = [
+const FEATURES: {
+  icon: React.ElementType;
+  title: string;
+  desc: string;
+  tab: string;
+}[] = [
   {
     icon: MapPin,
     title: "Live Threat Grid Map",
     desc: "Blacked-out SF map with real-time risk zones, verified users, blind spots, and labeled street names for situational awareness.",
+    tab: "dashboard",
   },
   {
     icon: Navigation,
     title: "Route Defense",
     desc: "GPS-powered safest route suggestions. Live tracking, compass heading, auto-recalculation around high-crime zones, and turn-by-turn steps.",
+    tab: "shield",
   },
   {
     icon: FileSearch,
     title: "Sex Offender Registry",
     desc: "Active SF-area registry with Tier I/II/III badges, mugshots, offense types, and neighborhood locations. Searchable and filterable.",
+    tab: "registry",
   },
   {
     icon: Zap,
     title: "Intelligence Feed",
     desc: "Live incident data from SFPD public reports and local emergency feeds. Free tier available — upgrade for full real-time access.",
+    tab: "intelligence",
   },
   {
     icon: Shield,
     title: "Black Tier Bodyguard Hiring",
     desc: "Hire vetted SF operatives directly from the app. Armed or unarmed. Variable pricing based on number of guards and hours. Invite-only.",
+    tab: "guards",
   },
   {
     icon: Lock,
     title: "Secure Identity Badge & QR",
     desc: "Consent-based encrypted ID badge sharing via QR scan or phone tap. Verified identity for your network of trusted operatives.",
+    tab: "profile",
+  },
+  {
+    icon: Users,
+    title: "Network Directory",
+    desc: "Connect with verified operatives in your area. View trust scores, badges, and add contacts to your personal watchlist.",
+    tab: "network",
+  },
+  {
+    icon: AlertTriangle,
+    title: "Personal Watchlist",
+    desc: "Add and monitor contacts of concern. Custom notes, threat levels, and instant alerts when watchlist contacts are flagged.",
+    tab: "watchlist",
+  },
+  {
+    icon: Eye,
+    title: "Emergency Services",
+    desc: "One-tap SOS with GPS coordinates, 911 quick-dial, SF non-emergency line, crisis text line, and call-a-car to exit any situation.",
+    tab: "dashboard",
   },
 ];
 
-const PRICING = [
+const PRICING: {
+  tier: string;
+  price: string;
+  period: string;
+  desc: string;
+  features: string[];
+  cta: string;
+  style: string;
+  badge?: string;
+  targetTab: string;
+}[] = [
   {
     tier: "FREE",
     price: "$0",
@@ -76,6 +117,7 @@ const PRICING = [
     ],
     cta: "GET STARTED",
     style: "default",
+    targetTab: "intelligence",
   },
   {
     tier: "ELITE",
@@ -93,6 +135,7 @@ const PRICING = [
     cta: "ACTIVATE ELITE",
     style: "gold",
     badge: "MOST POPULAR",
+    targetTab: "subscription",
   },
   {
     tier: "BLACK TIER",
@@ -110,6 +153,7 @@ const PRICING = [
     cta: "REQUEST INVITE",
     style: "black",
     badge: "INVITE ONLY",
+    targetTab: "guards",
   },
 ];
 
@@ -764,6 +808,8 @@ export default function LandingPage({
             </button>
             <button
               type="button"
+              onClick={() => onTabChange?.("intelligence")}
+              data-ocid="hero.explore_button"
               className="px-8 py-3 border border-[#2A2A2A] text-[#B8B8B8] text-xs tracking-widest uppercase hover:border-[#C9A95C] hover:text-[#C9A95C] transition-all"
             >
               VIEW CAPABILITIES
@@ -834,7 +880,7 @@ export default function LandingPage({
         </motion.div>
       </section>
 
-      {/* Features */}
+      {/* Features / Capabilities */}
       <section className="px-6 md:px-12 lg:px-24 pb-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -858,15 +904,28 @@ export default function LandingPage({
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="card-blackgrid hover:border-[#C9A95C44] hover:bg-[#151505] transition-all"
+                onClick={() => onTabChange?.(feat.tab)}
+                className="card-blackgrid hover:border-[#C9A95C44] hover:bg-[#151505] transition-all cursor-pointer flex flex-col"
+                data-ocid={`capabilities.item.${i + 1}`}
               >
                 <feat.icon className="w-6 h-6 text-[#C9A95C] mb-4" />
                 <h3 className="text-sm font-bold tracking-wider uppercase text-[#EDEDED] mb-2">
                   {feat.title}
                 </h3>
-                <p className="text-xs text-[#8A8A8A] leading-relaxed">
+                <p className="text-xs text-[#8A8A8A] leading-relaxed flex-1">
                   {feat.desc}
                 </p>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onTabChange?.(feat.tab);
+                  }}
+                  data-ocid={`capabilities.access_button.${i + 1}`}
+                  className="mt-4 w-full py-2 text-[9px] tracking-widest uppercase font-bold border border-[#C9A95C33] text-[#C9A95C] hover:bg-[#C9A95C] hover:text-[#0A0A0A] transition-all"
+                >
+                  ACCESS →
+                </button>
               </motion.div>
             ))}
           </div>
@@ -900,7 +959,7 @@ export default function LandingPage({
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: i * 0.15 }}
                 viewport={{ once: true }}
-                data-ocid={`pricing.${plan.tier.toLowerCase()}.card`}
+                data-ocid={`pricing.${plan.tier.toLowerCase().replace(" ", "-")}.card`}
                 className={`relative flex flex-col p-6 rounded border ${
                   plan.style === "gold"
                     ? "border-[#C9A95C] bg-[#0F0E00] gold-glow"
@@ -948,8 +1007,14 @@ export default function LandingPage({
                 </ul>
                 <button
                   type="button"
-                  onClick={onLogin}
-                  data-ocid={`pricing.${plan.tier.toLowerCase()}.primary_button`}
+                  onClick={() => {
+                    if (plan.tier === "FREE") {
+                      onTabChange?.(plan.targetTab);
+                    } else {
+                      onTabChange?.(plan.targetTab);
+                    }
+                  }}
+                  data-ocid={`pricing.${plan.tier.toLowerCase().replace(" ", "-")}.primary_button`}
                   className={`w-full py-2.5 text-[10px] tracking-widest uppercase font-bold transition-all ${
                     plan.style === "gold"
                       ? "bg-[#C9A95C] text-[#0A0A0A] hover:bg-[#E8C878]"
@@ -991,7 +1056,7 @@ export default function LandingPage({
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
             <button
               type="button"
-              onClick={onLogin}
+              onClick={() => onTabChange?.("subscription")}
               data-ocid="cta.primary_button"
               className="px-10 py-4 bg-[#C9A95C] text-[#0A0A0A] text-xs tracking-widest uppercase font-bold hover:bg-[#E8C878] transition-all gold-glow"
             >
@@ -999,7 +1064,7 @@ export default function LandingPage({
             </button>
             <button
               type="button"
-              onClick={onLogin}
+              onClick={() => onTabChange?.("guards")}
               data-ocid="cta.secondary_button"
               className="px-10 py-4 border border-[#2A2A2A] text-[#8A8A8A] text-xs tracking-widest uppercase hover:border-[#C9A95C] hover:text-[#C9A95C] transition-all"
             >

@@ -1,30 +1,35 @@
 # BLACKGRID
 
 ## Current State
-App has tabs: intelligence, dashboard, shield, profile, registry, network, guards, watchlist, subscription. No family/kids safety feature exists. Tab type and nav arrays are defined in App.tsx.
+- LiveMap.tsx: Static SVG with fake grid, hardcoded threat dots, no real streets, no GPS
+- ShieldTab.tsx (Route Defense): Static SVG grid map, simulated GPS, no real streets
+- DashboardTab.tsx: Uses LiveMap component
+- FamilySafetyTab.tsx: Child safety mode, shares app chrome with main BLACKGRID tabs
 
 ## Requested Changes (Diff)
 
 ### Add
-- New `family` tab in the nav and Tab type
-- `FamilySafetyTab.tsx` component: bright, cartoon-like, colorful, happy design (completely different from the matte black BLACKGRID aesthetic — this is a kid-friendly zone)
-- Features inside FamilySafetyTab:
-  - Big colorful header: "FAMILY SAFETY ZONE" with stars/hearts emoji decorations
-  - Kid Check-In button (large, round, bright green) — taps to send a "I'm safe!" check-in with GPS coordinates pre-filled into an SMS link to parent's number
-  - Parent phone number input (saved to localStorage)
-  - SOS Call Parent button (large, round, bright red/orange) — opens phone dialer to parent's number
-  - 911 button (for real emergencies)
-  - Safe Zones display — parent can add home/school addresses as safe zones with fun colored badges
-  - Fun animated mascot or emoji character as header illustration (use CSS/emoji, no image generation needed)
-  - Cheerful pastel backgrounds, rounded corners, bouncy cartoon font sizing, rainbow colored cards
-  - "Kids Mode" toggle feel — entirely distinct from the dark BLACKGRID UI
+- Leaflet.js + react-leaflet dependency for real map rendering
+- Real OpenStreetMap tile layer (free, no API key) in LiveMap and ShieldTab
+- Live GPS geolocation using browser Geolocation API showing a pulsing "YOU" dot on both maps
+- Threat markers at real SF lat/lng coordinates with popup tooltips showing: threat type, neighborhood, severity, description
+- Threat detail panel below/beside map listing all active threats with color-coded severity
+- A visual separator/banner making FAMILY tab look entirely different from main app (already has cartoon UI, but ensure nav and header clearly differentiate it — e.g. hide the dark BLACKGRID header when in FAMILY tab, show colorful family header instead)
 
 ### Modify
-- App.tsx: add `family` to Tab type, NAV_TABS, and render the FamilySafetyTab component (free, no paywall)
+- LiveMap.tsx: Replace entire SVG implementation with real Leaflet map centered on SF (37.7749, -122.4194), zoom 13, OpenStreetMap tiles, dark tile style or standard OSM, threat markers with popups, GPS "YOU" marker
+- ShieldTab.tsx: Replace SVG map section with real Leaflet map, keep GPS tracking/recalculation logic, show route on real map using polyline between start/end coords, show danger zone circles at real SF crime hotspot coordinates
+- FamilySafetyTab.tsx: Ensure it renders its own colorful header (rainbow/bright) instead of the main BLACKGRID gold header when active, clearly separated visually from the dark theme
 
 ### Remove
-- Nothing removed
+- All static SVG city block / grid / fake street label code in LiveMap.tsx and ShieldTab.tsx map section
 
 ## Implementation Plan
-1. Create `src/frontend/src/components/FamilySafetyTab.tsx` with full cartoon colorful UI
-2. Update App.tsx to add `family` tab to type, nav, and render logic
+1. Install leaflet, react-leaflet, and @types/leaflet via package.json
+2. Rewrite LiveMap.tsx using MapContainer, TileLayer, CircleMarker, Popup, useMap hook for GPS centering
+3. Real SF threat coordinates (Mission District, Tenderloin, SoMa, Western Addition, Bayview, etc.)
+4. Each threat marker has popup with: name, severity badge, neighborhood, offense type, description
+5. Threat detail list panel below map (scrollable, color-coded red/yellow/green)
+6. In ShieldTab.tsx: replace SVG map div with Leaflet MapContainer, show route as Polyline, danger zones as Circles
+7. GPS centering: useEffect with navigator.geolocation.watchPosition to update map center and "YOU" marker
+8. FamilySafetyTab: ensure its own bright header/banner renders when family tab active (already mostly done — verify and enforce)

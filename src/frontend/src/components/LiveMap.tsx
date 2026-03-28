@@ -1,54 +1,172 @@
-const THREAT_DOTS = [
-  { x: 18, y: 25, color: "#C00000", label: "danger-mission" },
-  { x: 32, y: 45, color: "#C00000", label: "danger-soma" },
-  { x: 55, y: 20, color: "#D8B84A", label: "unknown-nob" },
-  { x: 72, y: 38, color: "#D8B84A", label: "unknown-haight" },
-  { x: 48, y: 60, color: "#2ECC71", label: "verified-center" },
-  { x: 65, y: 72, color: "#2ECC71", label: "verified-excelsior" },
-  { x: 25, y: 70, color: "#C00000", label: "danger-tenderloin" },
-  { x: 85, y: 55, color: "#2ECC71", label: "verified-richmond" },
-  { x: 40, y: 82, color: "#D8B84A", label: "unknown-bayview" },
-  { x: 78, y: 85, color: "#2ECC71", label: "verified-sunset" },
-  { x: 12, y: 55, color: "#C00000", label: "danger-western" },
-  { x: 58, y: 42, color: "#D8B84A", label: "unknown-castro" },
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import { useEffect, useRef, useState } from "react";
+import {
+  CircleMarker,
+  MapContainer,
+  Popup,
+  TileLayer,
+  useMap,
+} from "react-leaflet";
+
+// Fix Leaflet default icon paths
+(L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl =
+  undefined;
+L.Icon.Default.mergeOptions({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+
+const THREATS = [
+  {
+    lat: 37.7625,
+    lng: -122.4193,
+    color: "#C00000",
+    label: "HIGH RISK",
+    neighborhood: "Tenderloin",
+    type: "Violent Crime Hotspot",
+    desc: "Elevated assault and robbery reports. Avoid after dark.",
+  },
+  {
+    lat: 37.7599,
+    lng: -122.4148,
+    color: "#C00000",
+    label: "HIGH RISK",
+    neighborhood: "SoMa",
+    type: "Theft & Assault Zone",
+    desc: "High vehicle break-in and mugging activity.",
+  },
+  {
+    lat: 37.753,
+    lng: -122.4089,
+    color: "#C00000",
+    label: "HIGH RISK",
+    neighborhood: "Mission District",
+    type: "Gang Activity",
+    desc: "Active gang territory. Multiple shooting incidents reported.",
+  },
+  {
+    lat: 37.7272,
+    lng: -122.4044,
+    color: "#C00000",
+    label: "HIGH RISK",
+    neighborhood: "Bayview",
+    type: "High Crime Zone",
+    desc: "Property crime and violent incidents above city average.",
+  },
+  {
+    lat: 37.7806,
+    lng: -122.4324,
+    color: "#C00000",
+    label: "HIGH RISK",
+    neighborhood: "Western Addition",
+    type: "Drug Activity",
+    desc: "Open drug market. Robbery incidents reported frequently.",
+  },
+  {
+    lat: 37.7749,
+    lng: -122.4194,
+    color: "#D8B84A",
+    label: "MONITOR",
+    neighborhood: "Civic Center",
+    type: "Elevated Watch",
+    desc: "Public safety incidents near plaza. Stay alert.",
+  },
+  {
+    lat: 37.7693,
+    lng: -122.4461,
+    color: "#D8B84A",
+    label: "MONITOR",
+    neighborhood: "Haight-Ashbury",
+    type: "Suspicious Activity",
+    desc: "Unverified reports of vandalism and loitering.",
+  },
+  {
+    lat: 37.7752,
+    lng: -122.3978,
+    color: "#D8B84A",
+    label: "MONITOR",
+    neighborhood: "Potrero Hill",
+    type: "Under Surveillance",
+    desc: "Incident reports being verified by network.",
+  },
+  {
+    lat: 37.7879,
+    lng: -122.4074,
+    color: "#2ECC71",
+    label: "CLEAR",
+    neighborhood: "Nob Hill",
+    type: "Low Risk Area",
+    desc: "No active threats. Safe passage confirmed.",
+  },
+  {
+    lat: 37.8024,
+    lng: -122.4058,
+    color: "#2ECC71",
+    label: "CLEAR",
+    neighborhood: "North Beach",
+    type: "Verified Safe",
+    desc: "Operative network verified. Low incident rate.",
+  },
+  {
+    lat: 37.7786,
+    lng: -122.4943,
+    color: "#2ECC71",
+    label: "CLEAR",
+    neighborhood: "Richmond District",
+    type: "Safe Zone",
+    desc: "Residential, low crime, BLACKGRID operatives present.",
+  },
+  {
+    lat: 37.7599,
+    lng: -122.5108,
+    color: "#2ECC71",
+    label: "CLEAR",
+    neighborhood: "Sunset District",
+    type: "Safe Zone",
+    desc: "Low threat level. Recommended safe passage.",
+  },
 ];
 
-const CITY_BLOCKS = [
-  { x: 5, y: 5, w: 22, h: 14, key: "block-nw1" },
-  { x: 30, y: 5, w: 18, h: 10, key: "block-n2" },
-  { x: 52, y: 5, w: 25, h: 12, key: "block-ne3" },
-  { x: 80, y: 5, w: 15, h: 16, key: "block-ne4" },
-  { x: 5, y: 25, w: 30, h: 16, key: "block-w5" },
-  { x: 40, y: 22, w: 20, h: 18, key: "block-c6" },
-  { x: 65, y: 24, w: 28, h: 14, key: "block-e7" },
-  { x: 5, y: 48, w: 18, h: 20, key: "block-sw8" },
-  { x: 28, y: 48, w: 22, h: 14, key: "block-s9" },
-  { x: 55, y: 45, w: 18, h: 22, key: "block-sc10" },
-  { x: 78, y: 45, w: 17, h: 18, key: "block-se11" },
-  { x: 5, y: 75, w: 28, h: 18, key: "block-ssw12" },
-  { x: 38, y: 70, w: 20, h: 24, key: "block-ss13" },
-  { x: 63, y: 72, w: 16, h: 22, key: "block-sse14" },
-  { x: 83, y: 70, w: 12, h: 24, key: "block-sse15" },
-];
-
-const H_LINES = Array.from({ length: 20 }, (_, i) => ({
-  y: i * 5,
-  key: `hline-y${i * 5}`,
-}));
-const V_LINES = Array.from({ length: 20 }, (_, i) => ({
-  x: i * 5,
-  key: `vline-x${i * 5}`,
-}));
+function MapAutoCenter({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap();
+  const centered = useRef(false);
+  useEffect(() => {
+    if (!centered.current) {
+      map.setView([lat, lng], 13);
+      centered.current = true;
+    }
+  }, [map, lat, lng]);
+  return null;
+}
 
 export default function LiveMap() {
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    const id = navigator.geolocation.watchPosition(
+      (pos) =>
+        setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { enableHighAccuracy: true },
+    );
+    return () => navigator.geolocation.clearWatch(id);
+  }, []);
+
   return (
     <div
       className="card-blackgrid border-gold gold-glow"
       data-ocid="live_map.card"
     >
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#C00000] animate-pulse-glow" />
+          <div className="w-2 h-2 rounded-full bg-[#C00000] animate-pulse" />
           <span className="text-xs tracking-widest uppercase text-[#EDEDED] font-medium">
             LIVE THREAT GRID
           </span>
@@ -61,219 +179,200 @@ export default function LiveMap() {
         </span>
       </div>
 
-      <div
-        className="relative w-full rounded overflow-hidden"
-        style={{ paddingBottom: "42%" }}
-      >
-        <svg
-          className="absolute inset-0 w-full h-full"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-          role="img"
-          aria-label="Live threat grid map of San Francisco"
+      {/* Map */}
+      <div style={{ borderRadius: "8px", overflow: "hidden", height: "400px" }}>
+        <MapContainer
+          center={[37.7749, -122.4194]}
+          zoom={13}
+          style={{ height: "400px", width: "100%" }}
+          scrollWheelZoom={false}
         >
-          <title>Live Threat Grid — San Francisco</title>
-          <rect width="100" height="100" fill="#0A0A0A" />
-          {H_LINES.map((line) => (
-            <line
-              key={line.key}
-              x1="0"
-              y1={line.y}
-              x2="100"
-              y2={line.y}
-              stroke="#C9A95C"
-              strokeOpacity="0.06"
-              strokeWidth="0.2"
-            />
-          ))}
-          {V_LINES.map((line) => (
-            <line
-              key={line.key}
-              x1={line.x}
-              y1="0"
-              x2={line.x}
-              y2="100"
-              stroke="#C9A95C"
-              strokeOpacity="0.06"
-              strokeWidth="0.2"
-            />
-          ))}
-          {CITY_BLOCKS.map((block) => (
-            <rect
-              key={block.key}
-              x={block.x}
-              y={block.y}
-              width={block.w}
-              height={block.h}
-              fill="#1A1A1A"
-              stroke="#2A2A2A"
-              strokeWidth="0.3"
-            />
-          ))}
-          <rect
-            x="5"
-            y="25"
-            width="30"
-            height="16"
-            fill="#7A0000"
-            fillOpacity="0.2"
-          />
-          <rect
-            x="5"
-            y="48"
-            width="18"
-            height="20"
-            fill="#7A0000"
-            fillOpacity="0.15"
-          />
-          {THREAT_DOTS.map((dot) => (
-            <g key={dot.label}>
-              <circle
-                cx={dot.x}
-                cy={dot.y}
-                r="1.5"
-                fill={dot.color}
-                opacity="0.3"
-              />
-              <circle cx={dot.x} cy={dot.y} r="0.8" fill={dot.color} />
-            </g>
-          ))}
-          <polyline
-            points="50,95 52,80 55,65 60,50 65,38 70,28"
-            stroke="#C9A95C"
-            strokeWidth="0.6"
-            fill="none"
-            strokeDasharray="2,1"
-            strokeOpacity="0.6"
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
           />
 
-          {/* Street name labels */}
-          <text
-            x="30"
-            y="72"
-            fill="#C9A95C"
-            opacity="0.55"
-            fontSize="2.8"
-            fontFamily="monospace"
-            transform="rotate(-30, 30, 72)"
-          >
-            Market St
-          </text>
-          <text
-            x="28"
-            y="78"
-            fill="#C9A95C"
-            opacity="0.55"
-            fontSize="2.8"
-            fontFamily="monospace"
-            transform="rotate(-30, 28, 78)"
-          >
-            Mission St
-          </text>
-          <text
-            x="52"
-            y="55"
-            fill="#C9A95C"
-            opacity="0.55"
-            fontSize="2.8"
-            fontFamily="monospace"
-            transform="rotate(-90, 52, 55)"
-          >
-            Van Ness Ave
-          </text>
-          <text
-            x="40"
-            y="62"
-            fill="#C9A95C"
-            opacity="0.55"
-            fontSize="2.8"
-            fontFamily="monospace"
-          >
-            Howard St
-          </text>
-          <text
-            x="45"
-            y="67"
-            fill="#C9A95C"
-            opacity="0.55"
-            fontSize="2.8"
-            fontFamily="monospace"
-          >
-            Folsom St
-          </text>
-          <text
-            x="55"
-            y="50"
-            fill="#C9A95C"
-            opacity="0.55"
-            fontSize="2.8"
-            fontFamily="monospace"
-            transform="rotate(-90, 55, 50)"
-          >
-            7th St
-          </text>
-          <text
-            x="65"
-            y="30"
-            fill="#C9A95C"
-            opacity="0.55"
-            fontSize="2.8"
-            fontFamily="monospace"
-          >
-            Geary Blvd
-          </text>
-          <text
-            x="72"
-            y="38"
-            fill="#C9A95C"
-            opacity="0.55"
-            fontSize="2.8"
-            fontFamily="monospace"
-            transform="rotate(-90, 72, 38)"
-          >
-            Divisadero St
-          </text>
+          {userPos && <MapAutoCenter lat={userPos.lat} lng={userPos.lng} />}
 
-          {/* Safe Route legend */}
-          <text
-            x="51"
-            y="90"
-            fill="#C9A95C"
-            opacity="0.8"
-            fontSize="2.5"
-            fontFamily="monospace"
-            fontWeight="bold"
-          >
-            SAFE ROUTE →
-          </text>
-        </svg>
+          {/* Threat markers */}
+          {THREATS.map((t) => (
+            <CircleMarker
+              key={`${t.neighborhood}-${t.lat}`}
+              center={[t.lat, t.lng]}
+              radius={t.label === "HIGH RISK" ? 10 : 8}
+              fillColor={t.color}
+              color="#000"
+              weight={1}
+              fillOpacity={0.85}
+            >
+              <Popup>
+                <div
+                  style={{
+                    background: "#111",
+                    color: "#EDEDED",
+                    padding: "8px",
+                    minWidth: "180px",
+                    fontFamily: "monospace",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#C9A95C",
+                      fontWeight: 700,
+                      fontSize: "13px",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    {t.neighborhood}
+                  </div>
+                  <span
+                    style={{
+                      background: t.color,
+                      color: t.color === "#2ECC71" ? "#000" : "#FFF",
+                      fontSize: "9px",
+                      padding: "2px 6px",
+                      borderRadius: "3px",
+                      fontWeight: 700,
+                      letterSpacing: "0.1em",
+                      display: "inline-block",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    {t.label}
+                  </span>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      marginBottom: "4px",
+                    }}
+                  >
+                    {t.type}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      color: "#AAAAAA",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {t.desc}
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
+
+          {/* YOU marker */}
+          {userPos && (
+            <CircleMarker
+              center={[userPos.lat, userPos.lng]}
+              radius={8}
+              fillColor="#4A9EFF"
+              color="#FFF"
+              weight={2}
+              fillOpacity={0.9}
+            >
+              <Popup>
+                <div
+                  style={{
+                    background: "#111",
+                    color: "#4A9EFF",
+                    fontFamily: "monospace",
+                    fontWeight: 700,
+                    padding: "6px",
+                  }}
+                >
+                  YOU ARE HERE
+                </div>
+              </Popup>
+            </CircleMarker>
+          )}
+        </MapContainer>
       </div>
 
-      <div className="flex items-center gap-6 mt-4">
+      {/* Legend */}
+      <div className="flex items-center gap-6 mt-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#C00000]" />
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ background: "#C00000" }}
+          />
           <span className="text-[10px] tracking-wider uppercase text-[#B8B8B8]">
             Risk Zones
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#D8B84A]" />
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ background: "#D8B84A" }}
+          />
           <span className="text-[10px] tracking-wider uppercase text-[#B8B8B8]">
-            Unknown
+            Monitor
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#2ECC71]" />
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ background: "#2ECC71" }}
+          />
           <span className="text-[10px] tracking-wider uppercase text-[#B8B8B8]">
             Verified
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-px border-t border-dashed border-[#C9A95C]" />
-          <span className="text-[10px] tracking-wider uppercase text-[#C9A95C]">
-            Safe Route
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ background: "#4A9EFF" }}
+          />
+          <span className="text-[10px] tracking-wider uppercase text-[#B8B8B8]">
+            You
           </span>
+        </div>
+      </div>
+
+      {/* Threat detail panel */}
+      <div
+        className="mt-4 rounded border p-3"
+        style={{ background: "#111", borderColor: "#C9A95C" }}
+      >
+        <div className="text-[10px] tracking-widest uppercase text-[#C9A95C] mb-3">
+          ACTIVE THREATS
+        </div>
+        <div
+          className="space-y-2 overflow-y-auto"
+          style={{ maxHeight: "12rem" }}
+        >
+          {THREATS.map((t) => (
+            <div
+              key={`panel-${t.neighborhood}`}
+              className="flex items-start gap-3 pl-2 py-1.5"
+              style={{ borderLeft: `3px solid ${t.color}` }}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-[#EDEDED]">
+                    {t.neighborhood}
+                  </span>
+                  <span
+                    className="text-[8px] font-bold px-1.5 py-0.5 rounded"
+                    style={{
+                      background: `${t.color}33`,
+                      color: t.color,
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    {t.label}
+                  </span>
+                </div>
+                <div className="text-[10px] text-[#8A8A8A]">{t.type}</div>
+                <div className="text-[9px] text-[#666] mt-0.5 leading-tight">
+                  {t.desc}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
