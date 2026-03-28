@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { AnimatePresence, motion } from "motion/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApprovalStatus } from "./backend.d";
 import AdminPanel from "./components/AdminPanel";
 import BodyguardDirectory from "./components/BodyguardDirectory";
@@ -838,6 +838,7 @@ function AuthenticatedApp({
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+  const [pendingTab, setPendingTab] = useState<Tab | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [localAdminOverride, setLocalAdminOverride] = useState(
     () => localStorage.getItem(STORAGE_KEY) === ADMIN_PASSCODE,
@@ -876,6 +877,13 @@ export default function App() {
 
   const { identity, login } = useInternetIdentity();
   const isAuthenticated = !!identity && !identity.getPrincipal().isAnonymous();
+
+  useEffect(() => {
+    if (isAuthenticated && pendingTab) {
+      setActiveTab(pendingTab);
+      setPendingTab(null);
+    }
+  }, [isAuthenticated, pendingTab]);
 
   const pathname = window.location.pathname;
 
@@ -918,10 +926,22 @@ export default function App() {
             <main className="pt-14">
               {activeTab === "registry" ? (
                 <OffenderRegistry />
+              ) : activeTab === "intelligence" ? (
+                <div className="p-4 max-w-4xl mx-auto">
+                  <IntelligenceTab isFreeUser={true} />
+                </div>
               ) : (
                 <LandingPage
                   onLogin={login}
-                  onTabChange={(tab) => setActiveTab(tab as Tab)}
+                  onTabChange={(tab) => {
+                    const freeTabs = ["registry", "intelligence"];
+                    if (freeTabs.includes(tab)) {
+                      setActiveTab(tab as Tab);
+                    } else {
+                      setPendingTab(tab as Tab);
+                      login();
+                    }
+                  }}
                 />
               )}
             </main>

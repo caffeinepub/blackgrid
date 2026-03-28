@@ -488,6 +488,26 @@ export default function OffenderRegistry() {
               >
                 SAN FRANCISCO · 2026 ACTIVE REGISTRY
               </p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span
+                  className="inline-block w-1.5 h-1.5 rounded-full animate-pulse"
+                  style={{ backgroundColor: "#CC3333" }}
+                />
+                <p
+                  className="text-[9px] tracking-widest uppercase"
+                  style={{ color: "#CC3333" }}
+                >
+                  UPDATED:{" "}
+                  {new Date()
+                    .toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                    .toUpperCase()
+                    .replace(/,/g, "")}
+                </p>
+              </div>
             </div>
             <div className="ml-auto flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-[#CC3333] animate-pulse" />

@@ -128,7 +128,10 @@ function BlackTierCard() {
             $300<span className="text-lg">+</span>
           </div>
           <div className="text-[10px] tracking-widest text-[#8A8A8A] uppercase">
-            invite only
+            one-time · invite only
+          </div>
+          <div className="text-[10px] tracking-widest text-[#C9A95C]/70 uppercase">
+            then $50/mo
           </div>
         </div>
       </div>
@@ -366,7 +369,10 @@ export default function SubscriptionPage() {
             <div className="ml-auto text-right">
               <div className="text-3xl font-bold text-[#C9A95C]">$100.00</div>
               <div className="text-[10px] tracking-widest text-[#8A8A8A] uppercase">
-                /month
+                one-time
+              </div>
+              <div className="text-[10px] tracking-widest text-[#C9A95C]/70 uppercase">
+                then $25/mo
               </div>
             </div>
           </div>
@@ -462,7 +468,7 @@ export default function SubscriptionPage() {
                 {[
                   {
                     step: "01",
-                    title: "SEND $100.00/MONTH VIA CHIME",
+                    title: "SEND $100.00 ONE-TIME VIA CHIME",
                     sub: "Chime tag: $Alise-Grey  ·  acgagc7@gmail.com",
                   },
                   {
@@ -548,7 +554,7 @@ export default function SubscriptionPage() {
                       PREPARING CHECKOUT...
                     </>
                   ) : (
-                    "PAY $100.00 — CARD OR PAYPAL"
+                    "PAY $100.00 ONE-TIME — CARD OR PAYPAL"
                   )}
                 </button>
                 <PaymentBadges />

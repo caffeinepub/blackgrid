@@ -230,6 +230,8 @@ type ParentSettingsProps = {
   onRemoveZone: (id: string) => void;
   currentPin: string;
   onPinChange: (v: string) => void;
+  currentChildPin: string;
+  onChildPinChange: (v: string) => void;
   onClose: () => void;
 };
 
@@ -241,6 +243,8 @@ function ParentSettingsPanel({
   onRemoveZone,
   currentPin,
   onPinChange,
+  currentChildPin,
+  onChildPinChange,
   onClose,
 }: ParentSettingsProps) {
   const [phoneInput, setPhoneInput] = useState(parentPhone);
@@ -266,6 +270,9 @@ function ParentSettingsPanel({
     setZoneAddress("");
   };
 
+  const [newChildPin, setNewChildPin] = useState("");
+  const [childPinMsg, setChildPinMsg] = useState("");
+
   const savePin = () => {
     if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
       setPinMsg("❌ PIN must be exactly 4 digits");
@@ -282,6 +289,18 @@ function ParentSettingsPanel({
     setConfirmPin("");
     setPinMsg("✅ PIN updated!");
     setTimeout(() => setPinMsg(""), 2500);
+  };
+
+  const saveChildPin = () => {
+    if (newChildPin.length !== 4 || !/^\d{4}$/.test(newChildPin)) {
+      setChildPinMsg("❌ Child PIN must be exactly 4 digits");
+      setTimeout(() => setChildPinMsg(""), 2500);
+      return;
+    }
+    onChildPinChange(newChildPin);
+    setNewChildPin("");
+    setChildPinMsg("✅ Child PIN updated!");
+    setTimeout(() => setChildPinMsg(""), 2500);
   };
 
   return (
@@ -535,12 +554,73 @@ function ParentSettingsPanel({
             )}
           </AnimatePresence>
         </div>
+
+        {/* Change Child PIN */}
+        <div
+          className="rounded-2xl p-4 mb-2"
+          style={{ backgroundColor: "#ECFDF5", border: "3px solid #10B981" }}
+        >
+          <h4 className="font-black text-sm mb-2" style={{ color: "#065F46" }}>
+            👶 Change Child PIN (current: {currentChildPin})
+          </h4>
+          <div className="space-y-2">
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={4}
+              value={newChildPin}
+              onChange={(e) =>
+                setNewChildPin(e.target.value.replace(/\D/g, "").slice(0, 4))
+              }
+              placeholder="New 4-digit child PIN"
+              className="w-full rounded-xl px-3 py-2 font-semibold outline-none text-sm"
+              style={{
+                border: "2px solid #10B981",
+                backgroundColor: "white",
+                color: "#44403C",
+              }}
+            />
+            <button
+              type="button"
+              onClick={saveChildPin}
+              className="w-full rounded-xl py-2 font-black text-sm text-white transition-transform active:scale-95"
+              style={{
+                background: "linear-gradient(135deg, #10B981, #059669)",
+              }}
+              data-ocid="family.submit_button"
+            >
+              UPDATE CHILD PIN 👶
+            </button>
+          </div>
+          <AnimatePresence>
+            {childPinMsg && (
+              <motion.p
+                initial={{ opacity: 0, y: 3 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-1.5 text-xs font-bold"
+                style={{
+                  color: childPinMsg.startsWith("✅") ? "#065F46" : "#EF4444",
+                }}
+              >
+                {childPinMsg}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
       </motion.div>
     </motion.div>
   );
 }
 
 export default function FamilySafetyTab() {
+  // Gate view mode: locked -> child or parent
+  type ViewMode = "locked" | "child" | "parent";
+  const [viewMode, setViewMode] = useState<ViewMode>("locked");
+  const [pendingEntry, setPendingEntry] = useState<"child" | "parent" | null>(
+    null,
+  );
+
   const [parentPhone, setParentPhone] = useState(
     () => localStorage.getItem("bg_parent_phone") ?? "",
   );
@@ -555,6 +635,9 @@ export default function FamilySafetyTab() {
   });
   const [pin, setPin] = useState(
     () => localStorage.getItem("bg_parent_pin") ?? "0000",
+  );
+  const [childPin, setChildPin] = useState(
+    () => localStorage.getItem("bg_child_pin") ?? "1234",
   );
   const [safeMsg, setSafeMsg] = useState("");
   const [callConfirm, setCallConfirm] = useState<null | {
@@ -578,6 +661,11 @@ export default function FamilySafetyTab() {
     localStorage.setItem("bg_parent_pin", v);
   };
 
+  const handleChildPinChange = (v: string) => {
+    setChildPin(v);
+    localStorage.setItem("bg_child_pin", v);
+  };
+
   const handleAddZone = (name: string, address: string) => {
     setSafeZones((prev) => [
       ...prev,
@@ -593,6 +681,15 @@ export default function FamilySafetyTab() {
     setShowPinDialog(false);
     setShowSettings(true);
   };
+
+  // Gate entry handlers
+  const handleGatePinSuccess = () => {
+    if (pendingEntry) {
+      setViewMode(pendingEntry);
+      setPendingEntry(null);
+    }
+  };
+  const getGatePin = () => (pendingEntry === "child" ? childPin : pin);
 
   const handleCheckIn = () => {
     if (!parentPhone) {
@@ -636,6 +733,107 @@ export default function FamilySafetyTab() {
     setCallConfirm({ label: "Call 911", href: "tel:911" });
   };
 
+  // ---- GATE SCREEN ----
+  if (viewMode === "locked") {
+    return (
+      <div
+        className="relative min-h-screen overflow-hidden flex items-center justify-center"
+        style={{ backgroundColor: "#FFF9F0" }}
+        data-ocid="family.panel"
+      >
+        {DOTS.map((d) => (
+          <FloatingDot
+            key={d.id}
+            x={d.x}
+            y={d.y}
+            color={d.color}
+            size={d.size}
+          />
+        ))}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.45, type: "spring", damping: 20 }}
+          className="relative z-10 w-full max-w-sm mx-auto px-6 py-10 text-center"
+        >
+          <div className="text-7xl mb-4">🔒</div>
+          <h1
+            className="text-3xl font-black mb-2"
+            style={{
+              background:
+                "linear-gradient(135deg, #F59E0B 0%, #EC4899 50%, #8B5CF6 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            FAMILY SAFETY
+          </h1>
+          <p
+            className="text-sm font-semibold mb-8"
+            style={{ color: "#78716C" }}
+          >
+            Select who is entering to unlock the right experience
+          </p>
+
+          <div className="space-y-4">
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => {
+                setPendingEntry("child");
+              }}
+              className="w-full rounded-2xl py-5 font-black text-xl text-white shadow-lg"
+              style={{
+                background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                border: "3px solid #059669",
+              }}
+              data-ocid="family.primary_button"
+            >
+              👶 CHILD ENTRY
+            </motion.button>
+
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => {
+                setPendingEntry("parent");
+              }}
+              className="w-full rounded-2xl py-5 font-black text-xl text-white shadow-lg"
+              style={{
+                background: "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
+                border: "3px solid #7C3AED",
+              }}
+              data-ocid="family.secondary_button"
+            >
+              👨‍👩‍👧 PARENT ENTRY
+            </motion.button>
+          </div>
+
+          <p
+            className="mt-6 text-xs font-semibold"
+            style={{ color: "#A89884" }}
+          >
+            🌈 BLACKGRID Family Safety Zone
+          </p>
+        </motion.div>
+
+        {/* Gate PIN Dialog */}
+        <AnimatePresence>
+          {pendingEntry && (
+            <PinDialog
+              storedPin={getGatePin()}
+              onSuccess={handleGatePinSuccess}
+              onClose={() => setPendingEntry(null)}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
   return (
     <div
       className="relative min-h-screen overflow-hidden"
@@ -646,6 +844,17 @@ export default function FamilySafetyTab() {
       {DOTS.map((d) => (
         <FloatingDot key={d.id} x={d.x} y={d.y} color={d.color} size={d.size} />
       ))}
+
+      {/* Lock button top-right */}
+      <button
+        type="button"
+        onClick={() => setViewMode("locked")}
+        className="absolute top-4 right-4 z-20 rounded-full px-4 py-2 font-black text-xs text-white shadow-md transition-transform active:scale-95"
+        style={{ background: "linear-gradient(135deg, #8B5CF6, #7C3AED)" }}
+        data-ocid="family.toggle"
+      >
+        🔒 LOCK
+      </button>
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 py-8 space-y-6">
         {/* Header */}
@@ -848,34 +1057,36 @@ export default function FamilySafetyTab() {
           </div>
         </motion.div>
 
-        {/* Parent Settings Lock Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.55 }}
-          className="rounded-2xl p-5"
-          style={{ backgroundColor: "#F0FDF4", border: "3px dashed #10B981" }}
-        >
-          <div className="text-center">
-            <p
-              className="text-xs font-semibold mb-3"
-              style={{ color: "#065F46" }}
-            >
-              Parents: manage phone number, safe zones & PIN
-            </p>
-            <button
-              type="button"
-              onClick={() => setShowPinDialog(true)}
-              className="inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-black text-sm text-white transition-transform active:scale-95 shadow-md"
-              style={{
-                background: "linear-gradient(135deg, #10B981, #059669)",
-              }}
-              data-ocid="family.open_modal_button"
-            >
-              🔒 Parent Settings
-            </button>
-          </div>
-        </motion.div>
+        {/* Parent Settings Lock Button - only shown to parent */}
+        {viewMode === "parent" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.55 }}
+            className="rounded-2xl p-5"
+            style={{ backgroundColor: "#F0FDF4", border: "3px dashed #10B981" }}
+          >
+            <div className="text-center">
+              <p
+                className="text-xs font-semibold mb-3"
+                style={{ color: "#065F46" }}
+              >
+                Parents: manage phone number, safe zones & PIN
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowPinDialog(true)}
+                className="inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-black text-sm text-white transition-transform active:scale-95 shadow-md"
+                style={{
+                  background: "linear-gradient(135deg, #10B981, #059669)",
+                }}
+                data-ocid="family.open_modal_button"
+              >
+                ⚙️ Parent Settings
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Footer */}
         <p
@@ -908,6 +1119,8 @@ export default function FamilySafetyTab() {
             onRemoveZone={handleRemoveZone}
             currentPin={pin}
             onPinChange={handlePinChange}
+            currentChildPin={childPin}
+            onChildPinChange={handleChildPinChange}
             onClose={() => setShowSettings(false)}
           />
         )}

@@ -122,7 +122,7 @@ const PRICING: {
   {
     tier: "ELITE",
     price: "$100",
-    period: "one-time",
+    period: "one-time · then $25/mo",
     desc: "Full platform access",
     features: [
       "Live Threat Grid Dashboard",
@@ -140,7 +140,7 @@ const PRICING: {
   {
     tier: "BLACK TIER",
     price: "$300+",
-    period: "invite only",
+    period: "one-time · then $50/mo · invite only",
     desc: "Bodyguard hiring program",
     features: [
       "All Elite features",
