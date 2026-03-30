@@ -11,6 +11,7 @@ import IntelligenceTab from "./components/IntelligenceTab";
 import LandingPage from "./components/LandingPage";
 import NetworkTab from "./components/NetworkTab";
 import OffenderRegistry from "./components/OffenderRegistry";
+import OsintPortal from "./components/OsintPortal";
 import PaymentFailure from "./components/PaymentFailure";
 import PaymentSuccess from "./components/PaymentSuccess";
 import ProfileTab from "./components/ProfileTab";
@@ -37,7 +38,8 @@ type Tab =
   | "profile"
   | "network"
   | "guards"
-  | "family";
+  | "family"
+  | "osint";
 
 const LOCKED_TABS: Tab[] = [
   "dashboard",
@@ -45,6 +47,7 @@ const LOCKED_TABS: Tab[] = [
   "profile",
   "network",
   "guards",
+  "osint",
   "watchlist",
 ];
 
@@ -58,6 +61,7 @@ const NAV_TABS: { id: Tab; label: string }[] = [
   { id: "guards", label: "GUARDS" },
   { id: "watchlist", label: "WATCHLIST" },
   { id: "family", label: "FAMILY" },
+  { id: "osint", label: "OSINT" },
   { id: "subscription", label: "SUBSCRIPTION" },
 ];
 
@@ -811,6 +815,23 @@ function AuthenticatedApp({
                 <FamilySafetyTab />
               </motion.div>
             )}
+            {activeTab === "osint" &&
+              (isTabLocked("osint") ? (
+                <ElitePaywall
+                  key="paywall-osint"
+                  onUpgrade={() => setActiveTab("subscription")}
+                />
+              ) : (
+                <motion.div
+                  key="osint"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <OsintPortal isAdmin={isAdmin} />
+                </motion.div>
+              ))}
             {activeTab === "subscription" && (
               <motion.div
                 key="subscription"

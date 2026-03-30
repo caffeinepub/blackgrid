@@ -1,7 +1,7 @@
 import { MapPin, RefreshCw, Zap } from "lucide-react";
 import { motion } from "motion/react";
+import { useCallback, useEffect, useState } from "react";
 import { Variant_low_severe_moderate } from "../backend.d";
-import { useAreaIncidents } from "../hooks/useQueries";
 
 const SEVERITY_CONFIG = {
   [Variant_low_severe_moderate.severe]: {
@@ -60,6 +60,83 @@ const STATIC_INCIDENTS = [
   },
 ];
 
+const SEVERE_KEYWORDS = [
+  "Assault",
+  "Robbery",
+  "Homicide",
+  "Weapons",
+  "Sex Offense",
+];
+const MODERATE_KEYWORDS = [
+  "Burglary",
+  "Motor Vehicle Theft",
+  "Drug Offense",
+  "Arson",
+  "Vandalism",
+];
+
+function classifySeverity(category: string) {
+  if (SEVERE_KEYWORDS.some((k) => category.includes(k)))
+    return Variant_low_severe_moderate.severe;
+  if (MODERATE_KEYWORDS.some((k) => category.includes(k)))
+    return Variant_low_severe_moderate.moderate;
+  return Variant_low_severe_moderate.low;
+}
+
+interface SFIncident {
+  incident_category?: string;
+  incident_subcategory?: string;
+  intersection?: string;
+  analysis_neighborhood?: string;
+  report_datetime?: string;
+}
+
+interface IncidentDisplay {
+  severity: Variant_low_severe_moderate;
+  location: string;
+  incidentType: string;
+}
+
+interface CacheEntry {
+  data: IncidentDisplay[];
+  fetchedAt: string;
+}
+
+const CACHE_KEY = "bg_intel_cache";
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const SF_API =
+  "https://data.sfgov.org/resource/wg3w-h783.json?$limit=25&$order=report_datetime DESC";
+
+function loadCache(): CacheEntry | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const entry: CacheEntry = JSON.parse(raw);
+    const age = Date.now() - new Date(entry.fetchedAt).getTime();
+    if (age < CACHE_TTL_MS) return entry;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function saveCache(data: IncidentDisplay[]) {
+  const entry: CacheEntry = { data, fetchedAt: new Date().toISOString() };
+  localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+}
+
+function mapSFIncident(r: SFIncident): IncidentDisplay {
+  const cat = r.incident_category ?? "Unknown Incident";
+  const sub = r.incident_subcategory;
+  const incidentType = sub ? `${cat} — ${sub}` : cat;
+  const location = r.analysis_neighborhood
+    ? `${r.analysis_neighborhood}, SF`
+    : r.intersection
+      ? r.intersection
+      : "San Francisco, SF";
+  return { severity: classifySeverity(cat), location, incidentType };
+}
+
 interface IntelligenceTabProps {
   isFreeUser?: boolean;
 }
@@ -67,14 +144,60 @@ interface IntelligenceTabProps {
 export default function IntelligenceTab({
   isFreeUser = false,
 }: IntelligenceTabProps) {
-  const {
-    data: incidents,
-    isLoading,
-    refetch,
-    isFetching,
-  } = useAreaIncidents();
+  const [incidents, setIncidents] = useState<IncidentDisplay[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [isSimulated, setIsSimulated] = useState(false);
+
+  const fetchLive = useCallback(async (forceRefresh = false) => {
+    setIsFetching(true);
+
+    if (!forceRefresh) {
+      const cached = loadCache();
+      if (cached) {
+        setIncidents(cached.data);
+        setLastUpdated(new Date(cached.fetchedAt).toLocaleString());
+        setIsSimulated(false);
+        setIsLoading(false);
+        setIsFetching(false);
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch(SF_API);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const raw: SFIncident[] = await res.json();
+      const mapped = raw.map(mapSFIncident);
+      saveCache(mapped);
+      setIncidents(mapped);
+      setLastUpdated(new Date().toLocaleString());
+      setIsSimulated(false);
+    } catch {
+      // Fall back to static
+      const cached = loadCache();
+      if (cached) {
+        setIncidents(cached.data);
+        setLastUpdated(new Date(cached.fetchedAt).toLocaleString());
+        setIsSimulated(false);
+      } else {
+        setIncidents(STATIC_INCIDENTS);
+        setLastUpdated(null);
+        setIsSimulated(true);
+      }
+    } finally {
+      setIsLoading(false);
+      setIsFetching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLive(false);
+  }, [fetchLive]);
+
   const displayedIncidents =
-    incidents && incidents.length > 0 ? incidents : STATIC_INCIDENTS;
+    incidents.length > 0 ? incidents : STATIC_INCIDENTS;
 
   const severeCount = displayedIncidents.filter(
     (i) => i.severity === Variant_low_severe_moderate.severe,
@@ -114,13 +237,32 @@ export default function IntelligenceTab({
           <h1 className="text-2xl font-bold tracking-widest uppercase text-[#EDEDED]">
             Area Intelligence
           </h1>
-          <p className="text-xs text-[#8A8A8A] mt-1 tracking-wide">
-            San Francisco — Live incident monitoring
-          </p>
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-xs text-[#8A8A8A] tracking-wide">
+              San Francisco — Live incident monitoring
+            </p>
+            {isSimulated && (
+              <span
+                className="text-[8px] tracking-widest px-2 py-0.5 font-bold"
+                style={{
+                  border: "1px solid #3A3000",
+                  color: "#D8B84A",
+                  backgroundColor: "#121000",
+                }}
+              >
+                SIMULATED DATA
+              </span>
+            )}
+          </div>
+          {lastUpdated && (
+            <p className="text-[8px] tracking-widest text-[#555] mt-1 uppercase">
+              LAST UPDATED: {lastUpdated}
+            </p>
+          )}
         </div>
         <button
           type="button"
-          onClick={() => refetch()}
+          onClick={() => fetchLive(true)}
           disabled={isFetching}
           data-ocid="intelligence.secondary_button"
           className="flex items-center gap-2 px-4 py-2 border border-[#2A2A2A] text-[#8A8A8A] hover:border-[#C9A95C] hover:text-[#C9A95C] transition-all text-[10px] tracking-widest uppercase"
@@ -203,11 +345,13 @@ export default function IntelligenceTab({
                 SEVERITY_CONFIG[Variant_low_severe_moderate.low];
               return (
                 <motion.div
-                  key={`${incident.location}-${incident.incidentType}`}
+                  key={`${incident.location}-${incident.incidentType}-${i}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  data-ocid={`intelligence.item.${i + 1}`}
+                  transition={{ delay: Math.min(i * 0.03, 0.5) }}
+                  data-ocid={
+                    `intelligence.item.${i + 1}` as `intelligence.item.${number}`
+                  }
                   className="flex items-center gap-4 p-4 rounded border"
                   style={{
                     backgroundColor: cfg.bg,
@@ -229,7 +373,7 @@ export default function IntelligenceTab({
                     style={{ color: cfg.color }}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold tracking-wider uppercase text-[#EDEDED]">
+                    <div className="text-sm font-bold tracking-wider uppercase text-[#EDEDED] truncate">
                       {incident.incidentType}
                     </div>
                     <div className="text-xs text-[#8A8A8A] mt-0.5">
